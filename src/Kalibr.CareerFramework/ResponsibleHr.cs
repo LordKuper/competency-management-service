@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The responsible HR of a unit.

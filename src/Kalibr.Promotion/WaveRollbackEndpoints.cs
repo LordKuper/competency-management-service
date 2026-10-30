@@ -1,11 +1,11 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Going back to a stage of a wave that has passed. Those who change the dates of a wave, its author and global administrators, ask what the return

@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using ClosedXML.Excel;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// A workbook of the organization import as a test writes it: the header of the level columns, «ФИО», «Должность» and «Юридическое лицо»,

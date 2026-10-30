@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Base of module aggregates: a random identifier, an optimistic-concurrency version and the creation time.

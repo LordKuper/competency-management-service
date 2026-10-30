@@ -1,9 +1,9 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// A host whose mail server is not there: nothing listens on its SMTP port, and the credentials it would present are secrets the logs must not show.

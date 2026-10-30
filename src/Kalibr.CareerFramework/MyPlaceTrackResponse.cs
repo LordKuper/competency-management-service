@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A career track the user's position is on, with the user's level, worked out from the position, and the levels above it.

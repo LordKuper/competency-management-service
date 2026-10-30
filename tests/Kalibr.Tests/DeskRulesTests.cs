@@ -1,10 +1,10 @@
 using AwesomeAssertions;
-using Competency.Desk;
-using Competency.Platform;
+using Kalibr.Desk;
+using Kalibr.Platform;
 using Xunit;
-using static Competency.Platform.DeskKind;
+using static Kalibr.Platform.DeskKind;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// How the desk turns the findings of every source into items: one item per object, what an absorbing finding hides, what is for

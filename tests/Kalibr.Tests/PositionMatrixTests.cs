@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The matrix of a position, kept by a unit with no track: who may create one and for which positions, its one column, the route to its

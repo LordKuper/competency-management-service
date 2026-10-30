@@ -1,10 +1,10 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Reads waves for those who manage them: who sees and changes which wave, and how a wave is described. A global administrator sees every wave,

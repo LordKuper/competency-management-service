@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A unit named in a career response.

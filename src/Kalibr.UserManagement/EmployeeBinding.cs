@@ -1,8 +1,8 @@
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The rules that tie an account to an employee: an account of any roles may have one working employee or none,

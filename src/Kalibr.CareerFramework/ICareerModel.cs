@@ -1,6 +1,6 @@
-using Competency.OrgStructure;
+using Kalibr.OrgStructure;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Access to the career model for other modules, which never see the module's entities. Implementations are scoped to a request,

@@ -1,9 +1,9 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The two rules that span the rows of several sessions and commissions, held by the promotion lock that the announcement takes exclusively and every

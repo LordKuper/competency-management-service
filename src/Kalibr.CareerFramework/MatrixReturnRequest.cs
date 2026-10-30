@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The comment an approver returns a version with; it may be left out when the approver changed the version.

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Whether the account of a unit's head or HR can act, and if not, why. Member names are sent in the API, so renaming one changes it.

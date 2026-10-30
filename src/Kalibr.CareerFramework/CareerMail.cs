@@ -1,11 +1,11 @@
 using System.Diagnostics;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The career reminders: who is now expected to act after an action, and the letter that tells them, with a link built from the configured

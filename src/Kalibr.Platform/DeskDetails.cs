@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The values a desk finding's reason names; the client words the reason from its kind, so each kind fills only the values it names.

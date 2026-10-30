@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Turns every unhandled exception into a ProblemDetails response and logs only its type, root type, database error code

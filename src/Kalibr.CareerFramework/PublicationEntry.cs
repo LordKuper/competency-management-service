@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// One draft that becomes active together with the published entry or version.

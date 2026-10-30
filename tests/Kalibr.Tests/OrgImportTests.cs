@@ -1,10 +1,10 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.OrgStructure.Import;
-using Competency.Tests.Infrastructure;
+using Kalibr.OrgStructure.Import;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The preview of the organization import: who may ask for it, what an unusable or hostile file does, and the plan a usable file gives, group by group.

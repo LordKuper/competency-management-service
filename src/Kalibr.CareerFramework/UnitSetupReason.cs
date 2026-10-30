@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Why a unit lacks one thing it needs or waits for it. Member names are sent in the API, so renaming one changes it.

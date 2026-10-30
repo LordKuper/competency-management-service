@@ -1,9 +1,9 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// One pass over the unfinished waves: each is brought up to date, one step at a time in order, so what a stopped service missed is caught up

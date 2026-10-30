@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// One reason of a desk item; the client words it from its kind.

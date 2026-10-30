@@ -1,6 +1,6 @@
-using Competency.CareerFramework;
+using Kalibr.CareerFramework;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The target an application names, found in the wave: the bound matrix, the version it is assessed by and the level.

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A shared block as the API returns it, with the unit it applies to, null for all, and its competencies by name in the order

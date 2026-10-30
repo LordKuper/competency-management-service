@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// A problem that makes the file unusable.

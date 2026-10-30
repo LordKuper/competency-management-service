@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The conventions shared by the search indexes and the search queries: the Russian full-text configuration and text preparation.

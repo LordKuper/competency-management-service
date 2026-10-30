@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What kind of record keeps a career entry from being deleted. Member names are sent in the API, so renaming one changes it.

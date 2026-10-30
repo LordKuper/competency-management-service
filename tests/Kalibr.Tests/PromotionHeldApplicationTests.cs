@@ -1,9 +1,9 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// A unit whose commission has no chair who acts holds back its own applications and nothing else: the session goes on for the other units, the held

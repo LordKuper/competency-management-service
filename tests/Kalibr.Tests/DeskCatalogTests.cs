@@ -1,9 +1,9 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// What the desk says about published matrices that went out of date, about draft catalogue entries awaiting approval, and that the set

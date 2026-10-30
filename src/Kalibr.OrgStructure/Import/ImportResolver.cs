@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// Matches the names of the file with the units, positions and legal entities of the system, creating one node per distinct name or path

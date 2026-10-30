@@ -2,9 +2,9 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Xunit;
 
-[assembly: AssemblyFixture(typeof(Competency.Tests.Infrastructure.TestEnvironment))]
+[assembly: AssemblyFixture(typeof(Kalibr.Tests.Infrastructure.TestEnvironment))]
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// The environment shared by the whole test run: one PostgreSQL container, from which every API host gets a database of its own,

@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// How many raters gave one point of a scale.

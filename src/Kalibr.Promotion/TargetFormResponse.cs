@@ -1,6 +1,6 @@
-using Competency.OrgStructure;
+using Kalibr.OrgStructure;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What a candidate needs to fill in an application for a matrix of an open wave.

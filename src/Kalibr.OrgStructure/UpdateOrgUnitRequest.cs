@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The new values of a unit's own fields. Every field is required so that omitting one never clears it by accident;

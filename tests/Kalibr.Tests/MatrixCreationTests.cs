@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// Creating a matrix and editing the document of its version: only the head of a unit creates its matrices, for a track of the unit or of a unit

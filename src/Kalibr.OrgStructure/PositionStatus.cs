@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The facts about a catalogue position that other modules may rely on.

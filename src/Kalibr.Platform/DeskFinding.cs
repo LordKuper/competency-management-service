@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// One fact a module reports for the user's desk. Findings about the same object become one desk item, with the findings as its reasons.

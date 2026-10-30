@@ -1,10 +1,10 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Works out the commissions of units from the stored members and the structure at the moment of asking: the responsible HR and the head of a unit

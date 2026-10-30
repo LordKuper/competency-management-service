@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The level of a track an application aims at.

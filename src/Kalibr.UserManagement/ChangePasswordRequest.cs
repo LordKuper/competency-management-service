@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// A user replacing their own password, proving they know the current one.

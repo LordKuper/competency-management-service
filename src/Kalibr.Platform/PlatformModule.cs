@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Registers and maps the cross-cutting platform services shared by all modules.
@@ -47,7 +47,7 @@ public static class PlatformModule
     private const string AppSection = "App";
     private const string UnknownClient = "unknown";
     private const string KeysPathSetting = "DataProtection:KeysPath";
-    private const string DataProtectionApplicationName = "competency-management-service";
+    private const string DataProtectionApplicationName = "kalibr";
     private const string ReadyTag = "ready";
     private const int PostgresMajorVersion = 18;
     private static readonly TimeSpan DatabaseWaitTimeout = TimeSpan.FromSeconds(60);

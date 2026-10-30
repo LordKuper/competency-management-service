@@ -1,8 +1,8 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// Saves each explicit event through its own context, connection and transaction, so it neither flushes

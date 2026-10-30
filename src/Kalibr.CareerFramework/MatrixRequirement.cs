@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What a level requires of a competency: a required score, a point of the competency's own scale; for a competency critical in the

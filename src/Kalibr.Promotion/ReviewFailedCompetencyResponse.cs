@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A critical competency that fell short in an earlier application.

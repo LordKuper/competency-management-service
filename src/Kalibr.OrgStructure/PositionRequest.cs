@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The name of a position, for creating one, renaming one, or finding or creating one by name.

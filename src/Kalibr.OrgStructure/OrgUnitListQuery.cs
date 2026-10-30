@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The filters and paging of the unit list request. Every filter is optional; pages count from 1.

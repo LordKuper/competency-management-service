@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// Describes in Russian the Identity failures an account or password change can produce, because administrators and users read them in the interface.

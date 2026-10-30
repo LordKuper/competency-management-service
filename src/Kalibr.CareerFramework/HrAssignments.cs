@@ -1,8 +1,8 @@
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Answers <see cref="IHrAssignments"/> from the unit HR assignments, on the request's database context, so a removal is saved and journaled

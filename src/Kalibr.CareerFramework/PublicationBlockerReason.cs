@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Why an entry keeps a career entry from being active. Member names are sent in the API, so renaming one changes it.

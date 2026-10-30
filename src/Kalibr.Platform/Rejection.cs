@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The responses that reject a change a module's rules forbid.

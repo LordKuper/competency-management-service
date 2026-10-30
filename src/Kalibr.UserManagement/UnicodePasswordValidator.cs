@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// Password validator that counts letters of any alphabet, Cyrillic included, as upper-case, lower-case and alphanumeric characters.

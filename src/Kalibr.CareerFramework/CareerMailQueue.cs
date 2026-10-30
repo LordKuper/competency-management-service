@@ -1,12 +1,12 @@
 using System.Threading.Channels;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Sends the career reminders outside the actions that cause them, so an action never waits on the mail server and a failed send never

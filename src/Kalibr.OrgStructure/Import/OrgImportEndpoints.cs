@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// The organization import API for global administrators and HR: a stateless preview of what a workbook would change, and an apply that reads the same workbook

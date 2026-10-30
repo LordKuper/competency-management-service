@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// An account as administrators see it; <c>roles</c> lists its roles in <see cref="UserRole"/> member order. Credentials, stamps, lockout state and links are never part of it.

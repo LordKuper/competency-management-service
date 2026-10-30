@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using NpgsqlTypes;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A person in the organization directory. The unit and position are the employee's main assignment, the only one the rules about matrices, "my place" and the like read; a head may have any assignment in the unit;

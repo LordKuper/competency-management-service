@@ -1,7 +1,7 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A level of the target form.

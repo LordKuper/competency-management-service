@@ -1,9 +1,9 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// How much of the desk is sent: the first items of each group with the group's total, the items of chosen groups up to a limit,

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A published or archived track matrix version with the composition of its blocks, scales and coefficients frozen at publication, so a

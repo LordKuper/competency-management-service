@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The connect-a-unit screen's read for a unit under others: the ancestors from the root, the inherited HR and positions; and that the

@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// A user setting a password with the token from an e-mailed link: the first one from an invitation, or a new one from a password reset link.

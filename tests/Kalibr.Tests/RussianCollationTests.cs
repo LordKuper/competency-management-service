@@ -1,10 +1,10 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Platform;
-using Competency.Tests.Infrastructure;
+using Kalibr.Platform;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// Lists the server orders by name follow the standard Russian ICU collation: a name in quotation marks stands before the others,

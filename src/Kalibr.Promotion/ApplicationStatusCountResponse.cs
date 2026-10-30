@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// How many applications of a list stand in a status.

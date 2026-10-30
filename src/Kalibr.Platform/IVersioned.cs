@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// An entity guarded by optimistic concurrency; its version is the HTTP entity tag.

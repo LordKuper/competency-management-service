@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The evidence a candidate gave for a competency.

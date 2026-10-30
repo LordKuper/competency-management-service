@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The published version of the position matrix of the user's unit for the user's position, with what its one column requires.

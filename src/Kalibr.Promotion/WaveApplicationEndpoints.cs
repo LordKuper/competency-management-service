@@ -1,13 +1,13 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What a wave offers about applications. A signed-in employee who can file applications reads the form of a target of a wave that takes them, with

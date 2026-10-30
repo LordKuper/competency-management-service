@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Takes a wave back to a stage that has passed. Everything people entered stays; what a later stage settled is reset, and the wave is marked as

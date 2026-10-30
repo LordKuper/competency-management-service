@@ -1,9 +1,9 @@
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What the career model expects of the signed-in user, or tells them for reference, by their roles at the moment of asking. Data is read

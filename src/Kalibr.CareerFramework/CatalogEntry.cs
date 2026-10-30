@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// An entry of a career catalogue: a direction, track, level, competency, scale or shared block. Only a track belongs to a unit,

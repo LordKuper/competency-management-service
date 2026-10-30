@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The entity version a client sends in <c>If-Match</c> to modify a resource.

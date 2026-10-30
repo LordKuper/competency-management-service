@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Lets a module contribute its entity configurations to the shared <see cref="AppDbContext"/> model.

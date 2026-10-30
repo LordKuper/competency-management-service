@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A version on review waiting for the signed-in user, with the step they act at and when it was last submitted. The matrix is named

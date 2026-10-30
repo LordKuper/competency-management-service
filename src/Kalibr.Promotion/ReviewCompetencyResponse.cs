@@ -1,6 +1,6 @@
-using Competency.CareerFramework;
+using Kalibr.CareerFramework;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Everything the commission weighs about one competency of a candidate.

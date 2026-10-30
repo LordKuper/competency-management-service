@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A promotion wave: the units whose employees may apply and the dates of its six stages. The stage a wave is in follows from the dates

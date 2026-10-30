@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using NpgsqlTypes;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// An entry of the shared position catalogue that employees' positions refer to. Names are stored trimmed and are unique

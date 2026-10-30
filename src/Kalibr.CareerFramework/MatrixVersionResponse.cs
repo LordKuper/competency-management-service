@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A matrix version as the API returns it. The entries are the published snapshot for a published or archived version, and read live

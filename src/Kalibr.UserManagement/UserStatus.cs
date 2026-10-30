@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The facts about an account that other modules may rely on.

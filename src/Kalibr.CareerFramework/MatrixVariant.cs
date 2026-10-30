@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A copy of a version's content as one participant handed it on: submitted by the unit head or returned with changes by an approver.

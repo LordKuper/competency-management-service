@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The matrix of a track a candidate of an open wave can apply by, with the levels of the track the matrix covers.

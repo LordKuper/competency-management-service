@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A shared block a version includes by reference, whose composition the block itself keeps. The types of the competencies of the

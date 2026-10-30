@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A condition of the formal check an application does not meet. Member names are stored and sent in the API, so renaming one changes both.

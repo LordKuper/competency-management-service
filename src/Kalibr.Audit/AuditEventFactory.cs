@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// Turns an <see cref="AuditEntry"/> into a journal row stamped with the current time and the ambient actor,

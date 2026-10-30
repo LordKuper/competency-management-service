@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The answer of a rater about one competency of a candidate. The journal keeps who gave it; nothing the API serves does.

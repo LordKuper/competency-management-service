@@ -1,8 +1,8 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// An application of an employee for a level of a track in a wave. The target is a level of the matrix version the wave bound for a unit; the

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A competency as the API returns it, with the names of its direction and scale; a general competency has no direction

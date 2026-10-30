@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// One entry of a version's approval history: who did what, when, at which step, with which comment and variant.

@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A candidate of a unit the signed-in head leads, with how complete the list of their raters is.

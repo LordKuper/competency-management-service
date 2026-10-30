@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The changes elsewhere that an employee stopping work or being deleted causes: the units they head lose their head, the units they are

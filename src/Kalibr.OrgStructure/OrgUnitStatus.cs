@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The facts about an organization unit that other modules may rely on.

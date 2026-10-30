@@ -1,11 +1,11 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Tests.Infrastructure;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// A unit's published matrix of a track applies in the units below it that have none of their own: the one rule over a tree of units, and what

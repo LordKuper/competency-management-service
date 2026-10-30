@@ -1,5 +1,5 @@
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The session API. Permission matrix: signing in, asking for a password reset link, and setting a password from an invitation or reset link

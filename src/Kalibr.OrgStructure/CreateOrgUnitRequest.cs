@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A new unit. It starts active, so its parent must be active too; an absent parent makes it a root.

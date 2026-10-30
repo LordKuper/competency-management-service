@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A level of education, in the order of the federal law on education: a higher member is a higher level. Member names are stored

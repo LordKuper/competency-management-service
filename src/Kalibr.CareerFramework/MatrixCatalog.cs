@@ -1,9 +1,9 @@
 using System.Globalization;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The catalogue side of matrix versions: which entries a version may refer to, whether a version is complete enough to be handed on,

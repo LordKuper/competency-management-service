@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What a candidate offers as evidence of a competency: up to <see cref="ArtifactInput.MaxLinks"/> artifacts, each a description and a link.

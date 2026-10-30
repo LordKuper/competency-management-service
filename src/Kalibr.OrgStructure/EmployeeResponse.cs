@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
 using System.Text.Json.Serialization;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// An employee as the API returns it, in one of two projections chosen by the caller's roles.

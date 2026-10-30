@@ -1,8 +1,8 @@
 using AwesomeAssertions;
-using Competency.OrgStructure.Import;
+using Kalibr.OrgStructure.Import;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// Which position names make an employee of the import file a candidate for the head of their unit: the name starts with a head word or phrase,

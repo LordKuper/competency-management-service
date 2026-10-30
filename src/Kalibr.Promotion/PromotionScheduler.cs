@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Runs <see cref="PromotionTick"/> by the host clock, which moves the waves from stage to stage: every minute, or every <c>Promotion:TickInterval</c>

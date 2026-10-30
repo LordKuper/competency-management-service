@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// Entry points through which the host composes the Desk module.
@@ -9,7 +9,7 @@ namespace Competency.Desk;
 public static class DeskModule
 {
     /// <summary>
-    /// Registers the Desk module services. The desk reads every <see cref="Competency.Platform.IDeskSource"/> the other modules register.
+    /// Registers the Desk module services. The desk reads every <see cref="Kalibr.Platform.IDeskSource"/> the other modules register.
     /// </summary>
     /// <param name="services">The service collection to extend.</param>
     /// <returns>The same collection, for chaining.</returns>

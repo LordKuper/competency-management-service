@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Checks of addresses of web pages that several modules share.

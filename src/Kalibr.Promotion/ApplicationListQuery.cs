@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The paging and filters of the list of the applications of a wave; pages count from 1. The search finds a part of the candidate's name.

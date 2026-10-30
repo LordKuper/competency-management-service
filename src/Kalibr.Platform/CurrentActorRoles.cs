@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The account role checks every module makes on the current actor, so none compares role values itself.

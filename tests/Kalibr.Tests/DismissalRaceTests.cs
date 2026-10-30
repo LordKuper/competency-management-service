@@ -1,10 +1,10 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Npgsql;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// An account is never created for, bound to or unblocked with an employee whose dismissal is in progress: the change waits for the

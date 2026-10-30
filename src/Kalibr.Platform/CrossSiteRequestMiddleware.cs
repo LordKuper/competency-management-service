@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Rejects state-changing requests that a browser reports as cross-site, as a second CSRF defence next to SameSite cookies.

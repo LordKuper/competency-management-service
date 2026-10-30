@@ -1,6 +1,6 @@
-using Competency.CareerFramework;
+using Kalibr.CareerFramework;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The score a candidate gave a competency.

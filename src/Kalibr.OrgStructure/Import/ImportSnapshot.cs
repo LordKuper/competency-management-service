@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 internal sealed record SnapshotUnit(Guid Id, string Name, Guid? ParentId, Guid? HeadEmployeeId, bool IsActive);
 

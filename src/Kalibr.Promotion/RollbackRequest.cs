@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The stage a wave goes back to and the dates it is then given: the stage becomes the current one today.

@@ -1,9 +1,9 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// Entry points through which the host composes the Audit module.

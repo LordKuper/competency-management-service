@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The links between the levels of a track and the positions that stand for them: who may change them, which positions a level may take,

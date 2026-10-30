@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// An anonymous request for a password reset link to the account with the given e-mail address.

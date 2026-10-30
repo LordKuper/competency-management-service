@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A matrix version that uses a catalogue entry, named by its matrix's unit and its track or, for a position matrix, its position; the

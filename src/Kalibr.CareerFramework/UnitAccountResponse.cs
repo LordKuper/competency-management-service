@@ -1,6 +1,6 @@
-using Competency.UserManagement;
+using Kalibr.UserManagement;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The account of a unit's head or HR and whether it can act. The version is the account's, sent back in <c>If-Match</c> to act on it.

@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The rules for the dates of a wave: the first stage starts at least a week after the wave is announced; a date never falls on a day before the

@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The cookie session: how it is configured, which claims it carries, and the check every request makes

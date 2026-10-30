@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The commission of a unit, kept once the unit's HR or an administrator sets its chair or members. The responsible HR and the head of the unit

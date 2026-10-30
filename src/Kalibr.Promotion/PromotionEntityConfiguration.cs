@@ -1,9 +1,9 @@
 using System.Text.Json;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Contributes the Promotion tables to the shared model, with snake_case names and foreign keys that never cascade.
@@ -13,13 +13,13 @@ internal sealed class PromotionEntityConfiguration : IEntityConfigurationContrib
     /// <summary>
     /// The entities of the other modules are named rather than typed because their modules keep them internal; all must be configured before this contributor runs.
     /// </summary>
-    private const string OrgUnitEntityName = "Competency.OrgStructure.OrgUnit";
+    private const string OrgUnitEntityName = "Kalibr.OrgStructure.OrgUnit";
 
-    private const string EmployeeEntityName = "Competency.OrgStructure.Employee";
-    private const string UserEntityName = "Competency.UserManagement.AppUser";
-    private const string MatrixEntityName = "Competency.CareerFramework.CompetencyMatrix";
-    private const string MatrixVersionEntityName = "Competency.CareerFramework.MatrixVersion";
-    private const string TrackEntityName = "Competency.CareerFramework.CareerTrack";
+    private const string EmployeeEntityName = "Kalibr.OrgStructure.Employee";
+    private const string UserEntityName = "Kalibr.UserManagement.AppUser";
+    private const string MatrixEntityName = "Kalibr.CareerFramework.CompetencyMatrix";
+    private const string MatrixVersionEntityName = "Kalibr.CareerFramework.MatrixVersion";
+    private const string TrackEntityName = "Kalibr.CareerFramework.CareerTrack";
     private const int NameMaxLength = 200;
     private const int EnumMaxLength = 30;
     private const int RaterEmailMaxLength = 254;

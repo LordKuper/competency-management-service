@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// An HR assignment as shown on a unit: the assigned employee, named by full name, the unit the assignment belongs to, and, for global

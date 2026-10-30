@@ -1,12 +1,12 @@
 using System.Net;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
-using Competency.UserManagement;
+using Kalibr.Tests.Infrastructure;
+using Kalibr.UserManagement;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// A password may hold Cyrillic: a Russian capital and a Russian small letter count as the upper and lower case the policy asks for, and a

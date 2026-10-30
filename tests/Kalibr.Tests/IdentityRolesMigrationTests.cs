@@ -1,9 +1,9 @@
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
-using Competency.Api;
-using Competency.Platform;
-using Competency.Tests.Infrastructure;
-using Competency.UserManagement;
+using Kalibr.Api;
+using Kalibr.Platform;
+using Kalibr.Tests.Infrastructure;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The data transfer of the migration that moves account roles to Identity roles and the responsible HR of a unit from an account to an employee:

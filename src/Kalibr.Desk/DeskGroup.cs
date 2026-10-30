@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// The groups of the desk, in the order the desk shows them: actions on the user's turn first, then those about the state of data,

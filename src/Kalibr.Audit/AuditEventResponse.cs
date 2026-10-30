@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// One journal row as the list endpoint returns it; the old and new values are the stored JSON objects, not text.

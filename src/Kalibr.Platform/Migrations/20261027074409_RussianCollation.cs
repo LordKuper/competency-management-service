@@ -3,7 +3,7 @@ using NpgsqlTypes;
 
 #nullable disable
 
-namespace Competency.Platform.Migrations
+namespace Kalibr.Platform.Migrations
 {
     /// <summary>
     /// Orders the name columns the server sorts by with the built-in Russian ICU collation. The generated search vectors of units and positions

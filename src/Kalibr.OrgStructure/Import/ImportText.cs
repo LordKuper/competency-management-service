@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// The text conventions of the import: how a cell is cleaned and how two names are compared.

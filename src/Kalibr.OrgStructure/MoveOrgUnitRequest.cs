@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The new parent of a unit; <see langword="null"/> makes it a root. The field is required so that omitting it never detaches a unit by accident.

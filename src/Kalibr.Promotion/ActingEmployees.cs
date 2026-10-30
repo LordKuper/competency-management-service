@@ -1,7 +1,7 @@
-using Competency.OrgStructure;
-using Competency.UserManagement;
+using Kalibr.OrgStructure;
+using Kalibr.UserManagement;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Tells who can take part in the process: an employee who works and whose account can act. Scoped to a request, because it shares the

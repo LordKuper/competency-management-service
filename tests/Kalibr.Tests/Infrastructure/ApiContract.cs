@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Text.Json.Nodes;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// The published API description read from the repository, so a test can take the set of operations from the contract instead of listing them.

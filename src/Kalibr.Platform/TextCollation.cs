@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The Russian ordering of names and full names, in the database and in memory, so a list reads the same wherever the server sorts it:

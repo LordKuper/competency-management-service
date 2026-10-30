@@ -1,11 +1,11 @@
 using System.Linq.Expressions;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// Answers <see cref="IUserDirectory"/> lookups straight from the account table, and creates the accounts other modules invite employees with.

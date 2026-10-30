@@ -1,9 +1,9 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// Contributes the <see cref="AppUser"/> table and the Identity role tables to the shared model: snake_case names, a client-generated Guid v4 key,
@@ -16,7 +16,7 @@ internal sealed class UserManagementEntityConfiguration : IEntityConfigurationCo
     /// <summary>
     /// The employee entity is named rather than typed because OrgStructure keeps it internal; it must be configured before this contributor runs.
     /// </summary>
-    private const string EmployeeEntityName = "Competency.OrgStructure.Employee";
+    private const string EmployeeEntityName = "Kalibr.OrgStructure.Employee";
 
     private const int RoleNameMaxLength = 256;
 

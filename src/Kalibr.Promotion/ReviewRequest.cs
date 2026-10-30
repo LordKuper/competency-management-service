@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What the chair records for a candidate: the score of every competency and, when they have reached one, the decision. Everything is replaced.

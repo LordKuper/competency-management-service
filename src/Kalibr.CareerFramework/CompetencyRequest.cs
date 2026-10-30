@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The fields of a new competency or of a change of one; every field but the scale and the evidence examples must be sent, an absent

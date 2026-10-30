@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The rating the candidate's own scores would earn for the target level, computed by the rules of the version. A competency the candidate has not

@@ -1,8 +1,8 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// Contributes the <see cref="OrgUnit"/>, <see cref="Employee"/>, <see cref="Position"/>, <see cref="OrgUnitPosition"/>, <see cref="LegalEntity"/>,

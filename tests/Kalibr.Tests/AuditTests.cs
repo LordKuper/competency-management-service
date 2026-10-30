@@ -1,11 +1,11 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Npgsql;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// Every mutation and every sign-in event is journaled with actor, role and request id, a refused change leaves no row,

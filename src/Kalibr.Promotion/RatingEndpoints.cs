@@ -1,13 +1,13 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The API of the circular rating. A rater lists the candidates they were asked to rate, sees the name of the candidate and the competencies, and gives

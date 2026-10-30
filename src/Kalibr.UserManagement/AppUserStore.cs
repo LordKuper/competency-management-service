@@ -1,9 +1,9 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The Identity user store, saving only what changed on the tracked user instead of marking every property modified,

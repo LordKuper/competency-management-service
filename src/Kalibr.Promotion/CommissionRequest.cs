@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The commission a unit is to have: the members besides those it always has, and the chair. Both are replaced.

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Competency.Platform.Migrations
+namespace Kalibr.Platform.Migrations
 {
     /// <summary>
     /// Adds secondary assignments, the legal entity directory and the legal entities of the main and the secondary assignments. No data moves:

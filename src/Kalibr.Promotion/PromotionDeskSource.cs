@@ -1,11 +1,11 @@
 using System.Globalization;
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What the promotion waves expect of the signed-in user, by what they are to the waves at the moment of asking, and the commissions without a chair

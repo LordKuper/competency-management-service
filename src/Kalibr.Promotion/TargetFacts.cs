@@ -1,6 +1,6 @@
-using Competency.CareerFramework;
+using Kalibr.CareerFramework;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What an application aims at, with the version it is assessed by.

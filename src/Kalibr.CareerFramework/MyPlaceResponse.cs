@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Where the signed-in user stands in the company: their unit, position, head and responsible HR, the career tracks their position is

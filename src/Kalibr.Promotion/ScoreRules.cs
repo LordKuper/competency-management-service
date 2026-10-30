@@ -1,6 +1,6 @@
-using Competency.CareerFramework;
+using Kalibr.CareerFramework;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The one check of a set of scores against a matrix version, for self-scores, rater answers and final scores alike.

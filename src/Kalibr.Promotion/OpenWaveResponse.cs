@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// An upcoming wave or a wave taking applications, as every signed-in user sees it.

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// One thing a unit needs to work, in the order a screen lists them. Member names are sent in the API, so renaming one changes it.

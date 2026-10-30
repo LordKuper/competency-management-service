@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// What the modules that cannot be referenced by the unit module keep about a unit: it cannot be deleted while any of it refers to the unit,

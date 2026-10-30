@@ -1,7 +1,7 @@
 using AwesomeAssertions;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// What the image build and the operators read must follow the code: every source project is restored before the sources are copied in, or the

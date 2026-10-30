@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// One thing that keeps a matrix version from being handed on, with the level and competency it is about, so a screen can point to them.

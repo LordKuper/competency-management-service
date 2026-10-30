@@ -1,8 +1,8 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// Creates an account that has no password and e-mails its owner the link to set one. Shared by the administrator's create call and the port

@@ -1,7 +1,7 @@
-using Competency.Platform;
-using static Competency.Platform.DeskKind;
+using Kalibr.Platform;
+using static Kalibr.Platform.DeskKind;
 
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// How the desk turns the findings of every source into items, one per object: the absorption and reason-order tables and the group of each kind.

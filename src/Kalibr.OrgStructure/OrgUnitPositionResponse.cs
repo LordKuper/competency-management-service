@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A position allowed in a unit, with the unit whose list holds it: the requested unit itself for its own list,

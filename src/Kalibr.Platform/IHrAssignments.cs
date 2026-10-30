@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The units an employee is assigned to as their responsible HR, for the modules that cannot reference the one that keeps the assignments:

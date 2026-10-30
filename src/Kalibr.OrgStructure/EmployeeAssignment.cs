@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A secondary assignment of an employee: a unit and a position besides the main assignment, which stays in the employee's own unit and position fields.

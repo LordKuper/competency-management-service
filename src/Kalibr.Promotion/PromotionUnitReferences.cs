@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Answers <see cref="IUnitReferences"/> from the waves and the commission of a unit, on the request's database context: a unit that is or was in a wave

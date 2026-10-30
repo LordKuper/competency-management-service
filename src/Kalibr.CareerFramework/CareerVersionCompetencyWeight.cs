@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The weight of a competency in the score of its group on a level of a matrix version, set for a group with its own weights.

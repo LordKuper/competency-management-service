@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using Xunit;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// Waiting for a state of the database or the host without sleeping for a fixed time.

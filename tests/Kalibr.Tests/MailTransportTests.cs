@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Sockets;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// A mail server that requires a sign-in, and two hosts that send to it: one with the right credentials and one with a wrong password.

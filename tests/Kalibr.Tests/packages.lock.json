@@ -561,47 +561,47 @@
           "xunit.v3.runner.common": "[4.0.1]"
         }
       },
-      "competency.api": {
+      "kalibr.api": {
         "type": "Project",
         "dependencies": {
-          "Competency.Audit": "[1.0.0, )",
-          "Competency.CareerFramework": "[1.0.0, )",
-          "Competency.Desk": "[1.0.0, )",
-          "Competency.OrgStructure": "[1.0.0, )",
-          "Competency.Platform": "[1.0.0, )",
-          "Competency.Promotion": "[1.0.0, )",
-          "Competency.UserManagement": "[1.0.0, )",
+          "Kalibr.Audit": "[1.0.0, )",
+          "Kalibr.CareerFramework": "[1.0.0, )",
+          "Kalibr.Desk": "[1.0.0, )",
+          "Kalibr.OrgStructure": "[1.0.0, )",
+          "Kalibr.Platform": "[1.0.0, )",
+          "Kalibr.Promotion": "[1.0.0, )",
+          "Kalibr.UserManagement": "[1.0.0, )",
           "Microsoft.AspNetCore.OpenApi": "[10.0.12, )"
         }
       },
-      "competency.audit": {
+      "kalibr.audit": {
         "type": "Project",
         "dependencies": {
-          "Competency.Platform": "[1.0.0, )"
+          "Kalibr.Platform": "[1.0.0, )"
         }
       },
-      "competency.careerframework": {
+      "kalibr.careerframework": {
         "type": "Project",
         "dependencies": {
-          "Competency.OrgStructure": "[1.0.0, )",
-          "Competency.Platform": "[1.0.0, )",
-          "Competency.UserManagement": "[1.0.0, )"
+          "Kalibr.OrgStructure": "[1.0.0, )",
+          "Kalibr.Platform": "[1.0.0, )",
+          "Kalibr.UserManagement": "[1.0.0, )"
         }
       },
-      "competency.desk": {
+      "kalibr.desk": {
         "type": "Project",
         "dependencies": {
-          "Competency.Platform": "[1.0.0, )"
+          "Kalibr.Platform": "[1.0.0, )"
         }
       },
-      "competency.orgstructure": {
+      "kalibr.orgstructure": {
         "type": "Project",
         "dependencies": {
           "ClosedXML": "[0.105.1, )",
-          "Competency.Platform": "[1.0.0, )"
+          "Kalibr.Platform": "[1.0.0, )"
         }
       },
-      "competency.platform": {
+      "kalibr.platform": {
         "type": "Project",
         "dependencies": {
           "MailKit": "[4.18.1, )",
@@ -611,20 +611,20 @@
           "System.Security.Cryptography.Pkcs": "[10.0.13, )"
         }
       },
-      "competency.promotion": {
+      "kalibr.promotion": {
         "type": "Project",
         "dependencies": {
-          "Competency.CareerFramework": "[1.0.0, )",
-          "Competency.OrgStructure": "[1.0.0, )",
-          "Competency.Platform": "[1.0.0, )",
-          "Competency.UserManagement": "[1.0.0, )"
+          "Kalibr.CareerFramework": "[1.0.0, )",
+          "Kalibr.OrgStructure": "[1.0.0, )",
+          "Kalibr.Platform": "[1.0.0, )",
+          "Kalibr.UserManagement": "[1.0.0, )"
         }
       },
-      "competency.usermanagement": {
+      "kalibr.usermanagement": {
         "type": "Project",
         "dependencies": {
-          "Competency.OrgStructure": "[1.0.0, )",
-          "Competency.Platform": "[1.0.0, )",
+          "Kalibr.OrgStructure": "[1.0.0, )",
+          "Kalibr.Platform": "[1.0.0, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.12, )"
         }
       }

@@ -1,10 +1,10 @@
 using AwesomeAssertions;
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Promotion;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Promotion;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The pure rules of a career session over scores and dates: the rating and readiness by the matrix version's formula, the checks of the scores

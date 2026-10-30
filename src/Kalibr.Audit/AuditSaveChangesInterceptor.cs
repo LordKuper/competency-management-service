@@ -1,12 +1,12 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// Journals every create, update and delete of an <see cref="AuditedAttribute"/> entity in the same save,

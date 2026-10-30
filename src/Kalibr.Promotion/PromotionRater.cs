@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// An employee asked to rate a candidate. A rater who has no account is invited to the system at the address the candidate gave, once the head of

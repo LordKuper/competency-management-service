@@ -1,9 +1,9 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The responses that reject a request the account rules forbid, with reasons addressed to the administrator or the user.

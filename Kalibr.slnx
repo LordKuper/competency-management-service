@@ -1,16 +1,16 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Competency.Api/Competency.Api.csproj" />
-    <Project Path="src/Competency.Audit/Competency.Audit.csproj" />
-    <Project Path="src/Competency.CareerFramework/Competency.CareerFramework.csproj" />
-    <Project Path="src/Competency.Desk/Competency.Desk.csproj" />
-    <Project Path="src/Competency.OrgStructure/Competency.OrgStructure.csproj" />
-    <Project Path="src/Competency.Platform/Competency.Platform.csproj" />
-    <Project Path="src/Competency.Promotion/Competency.Promotion.csproj" />
-    <Project Path="src/Competency.UserManagement/Competency.UserManagement.csproj" />
+    <Project Path="src/Kalibr.Api/Kalibr.Api.csproj" />
+    <Project Path="src/Kalibr.Audit/Kalibr.Audit.csproj" />
+    <Project Path="src/Kalibr.CareerFramework/Kalibr.CareerFramework.csproj" />
+    <Project Path="src/Kalibr.Desk/Kalibr.Desk.csproj" />
+    <Project Path="src/Kalibr.OrgStructure/Kalibr.OrgStructure.csproj" />
+    <Project Path="src/Kalibr.Platform/Kalibr.Platform.csproj" />
+    <Project Path="src/Kalibr.Promotion/Kalibr.Promotion.csproj" />
+    <Project Path="src/Kalibr.UserManagement/Kalibr.UserManagement.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Competency.Tests/Competency.Tests.csproj" />
+    <Project Path="tests/Kalibr.Tests/Kalibr.Tests.csproj" />
   </Folder>
   <Folder Name="/dev/">
     <Project Path="deploy/dev/docker-compose.dcproj">

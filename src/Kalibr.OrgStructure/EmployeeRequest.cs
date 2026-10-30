@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The fields of an employee, for creating one and for replacing all of an existing one's fields at once,

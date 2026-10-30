@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Where an application stands. Member names are stored and sent in the API, so renaming one changes both.

@@ -1,6 +1,6 @@
 using Xunit;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// A host with a database of its own for one test class, started with the given configuration overrides and stopped after the class.

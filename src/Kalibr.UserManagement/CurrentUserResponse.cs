@@ -1,6 +1,6 @@
-using Competency.OrgStructure;
+using Kalibr.OrgStructure;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The signed-in account as the interface needs it to adapt to its roles and to name the user.

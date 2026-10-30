@@ -1,11 +1,11 @@
 using System.Text.Json;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Contributes the CareerFramework tables to the shared model: the <see cref="OrgUnitHr"/> assignments, the career catalogues with the shared blocks, the links of levels to positions and the matrices,
@@ -16,11 +16,11 @@ internal sealed class CareerFrameworkEntityConfiguration : IEntityConfigurationC
     /// <summary>
     /// The unit, position, employee and account entities are named rather than typed because their modules keep them internal; all must be configured before this contributor runs.
     /// </summary>
-    private const string OrgUnitEntityName = "Competency.OrgStructure.OrgUnit";
+    private const string OrgUnitEntityName = "Kalibr.OrgStructure.OrgUnit";
 
-    private const string PositionEntityName = "Competency.OrgStructure.Position";
-    private const string EmployeeEntityName = "Competency.OrgStructure.Employee";
-    private const string UserEntityName = "Competency.UserManagement.AppUser";
+    private const string PositionEntityName = "Kalibr.OrgStructure.Position";
+    private const string EmployeeEntityName = "Kalibr.OrgStructure.Employee";
+    private const string UserEntityName = "Kalibr.UserManagement.AppUser";
     private const int EnumMaxLength = 16;
 
     /// <summary>

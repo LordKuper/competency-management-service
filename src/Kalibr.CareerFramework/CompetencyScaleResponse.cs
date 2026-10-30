@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A scale as the API returns it, with its points in ascending order of score and whether it is the default scale. The version equals the <c>ETag</c> a change returns

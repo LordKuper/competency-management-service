@@ -1,7 +1,7 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The card of a candidate for the commission: the application, what was learned about it at each stage, the chair's scores with the rating

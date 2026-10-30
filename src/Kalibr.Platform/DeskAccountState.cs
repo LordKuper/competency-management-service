@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Why an account a desk finding concerns cannot act. Member names are sent in the API, so renaming one changes it.

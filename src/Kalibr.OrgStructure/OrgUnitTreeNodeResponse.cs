@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A unit of the tree with what its card shows besides the unit itself, so that no request per card is needed.

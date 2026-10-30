@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Who produced a variant of a matrix version. Member names are stored and sent in the API, so renaming one changes both.

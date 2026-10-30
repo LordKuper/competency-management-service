@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The rule that at least one active global administrator, one that is not blocked and has registered, always exists, enforced by locking the set of active administrators

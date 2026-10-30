@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The move of one assignment of an employee to another unit, the assignment being named by its unit and position, which are unique among the employee's assignments.

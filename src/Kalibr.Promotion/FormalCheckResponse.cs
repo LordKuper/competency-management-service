@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The result the formal check would have now, for the responsible HR to see while entering the dates; it is settled when the check stage ends.

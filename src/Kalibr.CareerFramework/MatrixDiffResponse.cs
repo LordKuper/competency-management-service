@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What a document changed against the one before it, or against an empty document when there is none: both documents, with the

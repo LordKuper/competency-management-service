@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The whole organization structure read at once, with the module's own tree and position rules, so that callers checking many

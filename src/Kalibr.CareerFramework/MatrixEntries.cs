@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The catalogue entries a matrix version refers to, as they stand: read live for a version in work, and frozen into a published

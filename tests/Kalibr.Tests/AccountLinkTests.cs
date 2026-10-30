@@ -1,10 +1,10 @@
 using System.Net;
 using System.Text.RegularExpressions;
 using AwesomeAssertions;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// Registration by invitation and password reset by e-mailed link, from the administrator's action and the user's request to the screen the

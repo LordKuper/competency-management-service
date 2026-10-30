@@ -1,10 +1,10 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Checks what a candidate puts in an application: a target the wave offers and the candidate may aim at, scores on the scale of its version and raters who can rate. A draft

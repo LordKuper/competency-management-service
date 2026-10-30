@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What the filters of the application list would show, counted across all pages within the candidate search but not the status filters.

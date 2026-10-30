@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// A role an account may hold; an account holds any set of them, and one without any is a plain user who may do only what the read policies allow.

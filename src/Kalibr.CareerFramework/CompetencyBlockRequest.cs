@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The name, unit and composition of a new shared block or of a change of one; the composition replaces the block's as a whole. A block

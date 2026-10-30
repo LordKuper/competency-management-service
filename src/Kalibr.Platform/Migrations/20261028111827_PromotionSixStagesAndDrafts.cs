@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Competency.Platform.Migrations
+namespace Kalibr.Platform.Migrations
 {
     /// <inheritdoc />
     public partial class PromotionSixStagesAndDrafts : Migration

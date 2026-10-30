@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A wave to announce or a new state of an announced wave: when it starts, when each stage ends and which units take part. Everything is replaced.

@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The fields of a new account, which is invited to set its own password by e-mail. An account of any roles may have an employee; <c>employeeId</c> is null for none.

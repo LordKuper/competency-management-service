@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The name and points of a new scale or of a change of one; the points replace the scale's points as a whole.

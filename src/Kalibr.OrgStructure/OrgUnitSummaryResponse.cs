@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// How many working employees a unit has, each counted once, by any of their assignments: directly in the unit, and together with all units below it.

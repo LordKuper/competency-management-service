@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// The units to deactivate and the employees to dismiss once the defaults are applied to the entities the user did not decide on.

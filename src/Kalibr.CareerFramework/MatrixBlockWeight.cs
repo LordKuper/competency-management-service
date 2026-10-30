@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The share of a group of competencies in the rating of a level, in percent: a shared block, or null for the competencies outside

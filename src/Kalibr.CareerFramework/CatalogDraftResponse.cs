@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A draft entry awaiting approval, with its unit for a track or the unit a shared block applies to. The author is named by their employee's full name, or else by their e-mail.

@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The commission of a unit as it stands now: the members it has always and those it was given, and the chair if the chair still acts.

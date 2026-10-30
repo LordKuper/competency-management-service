@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What the signed-in user is to the applications of one wave: their employee, what they are to the wave and what they are to the units of its targets.

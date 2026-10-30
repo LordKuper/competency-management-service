@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The fixed identifiers of the Identity role rows, one per <see cref="UserRole"/> member; a new member needs its identifier here and a migration adding its row.

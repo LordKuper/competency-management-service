@@ -1,11 +1,11 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The one rule of making career entries active. Approving or reactivating a catalogue entry, and publishing a matrix version, make

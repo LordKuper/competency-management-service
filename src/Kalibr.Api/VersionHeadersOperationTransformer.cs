@@ -1,8 +1,8 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 
-namespace Competency.Api;
+namespace Kalibr.Api;
 
 /// <summary>
 /// Describes the concurrency headers of operations the platform marks: <c>If-Match</c> on requests and <c>ETag</c> on successful responses.

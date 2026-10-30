@@ -1,8 +1,8 @@
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Tells who may not be asked to rate: the employees on the global administrator's list and the holders of the positions on it. Scoped to a request,

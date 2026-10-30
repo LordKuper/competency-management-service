@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// A head chosen for a unit of the plan, checked against the plan.

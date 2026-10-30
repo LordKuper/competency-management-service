@@ -1,11 +1,11 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// The API of the signed-in user's desk. It answers only about the user: no parameter names whose desk it is, so nobody can read another's.

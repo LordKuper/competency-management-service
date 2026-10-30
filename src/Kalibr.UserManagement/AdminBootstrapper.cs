@@ -1,10 +1,10 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// Creates the first global administrator from the environment when none is active, so a fresh system can be signed in to;

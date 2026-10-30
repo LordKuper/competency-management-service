@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Reads the current actor from the claims and items of the ambient HTTP request.

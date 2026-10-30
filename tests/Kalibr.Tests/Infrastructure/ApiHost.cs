@@ -5,7 +5,7 @@ using System.Text;
 using Npgsql;
 using Xunit;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// The real API in a child process on a loopback port, started from the build output of the API project against one PostgreSQL database:

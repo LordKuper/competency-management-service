@@ -1,7 +1,7 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The content of an application: the target, the candidate's education, their scores for the competencies of the version and the raters they propose.

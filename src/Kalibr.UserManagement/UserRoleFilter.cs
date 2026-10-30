@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The role filter of the account list. Member names are sent in the API, so renaming one changes it.

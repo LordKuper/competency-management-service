@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The kinds of records desk findings are about or name. Member names are sent in the API, so renaming one changes it.

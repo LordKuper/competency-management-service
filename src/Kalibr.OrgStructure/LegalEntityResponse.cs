@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A legal entity of the directory as the API returns it.

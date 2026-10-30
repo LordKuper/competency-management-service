@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The dates of a career session, for every role that sees the session or an application in it, so a deadline can be shown beside what it limits.

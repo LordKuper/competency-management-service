@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The career process roles of the signed-in user, for showing menus and actions; the server checks the roles again on every action.

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Records events that no tracked entity change describes on its own, such as sign-in and sign-out.

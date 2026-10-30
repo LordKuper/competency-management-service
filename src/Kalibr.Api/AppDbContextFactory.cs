@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Competency.Api;
+namespace Kalibr.Api;
 
 /// <summary>
 /// Builds <see cref="AppDbContext"/> for EF tools with the full module model and a connection string that is never opened.

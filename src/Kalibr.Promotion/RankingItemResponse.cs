@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A candidate in the ranking of a commission. Only the commission of the unit and administrators see it.

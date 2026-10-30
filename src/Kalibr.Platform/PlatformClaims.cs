@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The claim types and values the authorization policies and the current actor rely on; sign-in must issue exactly these.

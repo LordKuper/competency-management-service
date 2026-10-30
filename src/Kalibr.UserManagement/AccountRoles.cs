@@ -1,8 +1,8 @@
 using System.Text.Json;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// An account's roles as Identity stores them, always in <see cref="UserRole"/> member order, since Identity promises none.

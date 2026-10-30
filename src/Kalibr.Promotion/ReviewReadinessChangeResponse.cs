@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// How the candidate's readiness moved since the latest earlier application that got a decision, whatever its target. Both readiness figures come from the

@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 // One page of a list, with the number of rows matching the filters across all pages.
 // Deliberately without XML documentation: the OpenAPI generator would copy it into the published schemas.

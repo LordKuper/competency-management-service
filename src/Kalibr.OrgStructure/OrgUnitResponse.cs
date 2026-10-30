@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A unit as the API returns it, in lists, trees and single reads alike. The version equals the <c>ETag</c> of the single read.

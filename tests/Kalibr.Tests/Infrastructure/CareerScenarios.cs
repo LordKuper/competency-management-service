@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// A signed-in participant of the career process: the account, its session and the employee it is bound to, if any.

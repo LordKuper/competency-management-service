@@ -1,13 +1,13 @@
 using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
-using Competency.Platform;
-using Competency.Tests.Infrastructure;
+using Kalibr.Platform;
+using Kalibr.Tests.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The platform on a real database: schema applied from an empty database, probes, the mail and link settings it refuses to start with,

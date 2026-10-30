@@ -1,6 +1,6 @@
-using Competency.OrgStructure;
+using Kalibr.OrgStructure;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The one rule for which published matrix applies in a unit: its own for a track or a position, otherwise that of the nearest unit above

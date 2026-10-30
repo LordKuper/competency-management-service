@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A direction as the API returns it. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.

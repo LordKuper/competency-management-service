@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The employee a global administrator assigned to a unit as its responsible HR; the assignment acts through the account bound to the employee at the moment. The unit and the units below it inherit the assignment down to the first unit

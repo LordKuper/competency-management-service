@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// How long the links e-mailed to accounts stay usable, and how often an anonymous request may issue a password reset link,

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Why a draft track may not be approved yet: it has no levels, or levels without a linked active position.

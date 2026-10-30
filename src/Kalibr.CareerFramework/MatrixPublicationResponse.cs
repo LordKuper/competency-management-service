@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What publishing a matrix version would make active now, which of the user's actions would publish it, and what keeps it from being published.

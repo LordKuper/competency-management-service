@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What a unit has and lacks to work: its head, its responsible HR, their accounts and its positions, with the status of each.

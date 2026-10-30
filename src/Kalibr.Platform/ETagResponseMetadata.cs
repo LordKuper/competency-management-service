@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Endpoint metadata marking responses that carry an <c>ETag</c> header; read by the API description.

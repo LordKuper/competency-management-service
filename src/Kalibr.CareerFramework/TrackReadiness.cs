@@ -1,6 +1,6 @@
-using Competency.OrgStructure;
+using Kalibr.OrgStructure;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Whether a track may be active: it has levels other than inactive ones, and each of them has a linked active position.

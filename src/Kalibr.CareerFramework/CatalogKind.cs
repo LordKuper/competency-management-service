@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What the shared catalogue endpoints need to know about one entry type.

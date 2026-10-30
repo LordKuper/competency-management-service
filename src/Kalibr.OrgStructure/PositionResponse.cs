@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A catalogue position as the API returns it. The version equals the <c>ETag</c> a change returns and is sent back in <c>If-Match</c>.

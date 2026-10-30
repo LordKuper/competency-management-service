@@ -1,7 +1,7 @@
 using Npgsql;
 using Xunit;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// The row lock of one account, or of the set of active administrators, held in a transaction on a connection of its own, so that every

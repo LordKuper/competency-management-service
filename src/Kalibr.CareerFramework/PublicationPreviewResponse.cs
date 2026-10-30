@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What approving or reactivating a catalogue entry would publish now, and what keeps it from being published.

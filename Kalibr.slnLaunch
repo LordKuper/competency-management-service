@@ -8,9 +8,9 @@
         "DebugTarget": "Docker Compose"
       },
       {
-        "Path": "src\\Competency.Api\\Competency.Api.csproj",
+        "Path": "src\\Kalibr.Api\\Kalibr.Api.csproj",
         "Action": "Start",
-        "DebugTarget": "Competency.Api"
+        "DebugTarget": "Kalibr.Api"
       },
       {
         "Path": "web\\web.esproj",
@@ -28,9 +28,9 @@
         "DebugTarget": "Docker Compose"
       },
       {
-        "Path": "src\\Competency.Api\\Competency.Api.csproj",
+        "Path": "src\\Kalibr.Api\\Kalibr.Api.csproj",
         "Action": "Start",
-        "DebugTarget": "Competency.Api"
+        "DebugTarget": "Kalibr.Api"
       }
     ]
   }

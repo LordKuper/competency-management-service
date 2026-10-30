@@ -1,4 +1,4 @@
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// One non-empty desk group with its first items.

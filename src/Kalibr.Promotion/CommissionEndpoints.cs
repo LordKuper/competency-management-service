@@ -1,13 +1,13 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The API of the commission of a unit. The responsible HR of the unit, a global administrator and the members read it; the HR and the

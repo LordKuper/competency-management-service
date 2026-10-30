@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What the signed-in user is to an application; one user can be several, except that its candidate is only ever its candidate.

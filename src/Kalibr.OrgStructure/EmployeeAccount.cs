@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The e-mail, block state and HR candidacy of the account bound to an employee, read through a query over the account table that another module owns.

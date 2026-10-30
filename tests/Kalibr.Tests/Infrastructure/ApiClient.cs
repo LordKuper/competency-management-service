@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 using Xunit;
 using Xunit.Sdk;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// One caller of the API: its own cookie jar, so a client is either anonymous or holds the session it signed in with.

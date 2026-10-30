@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// Answers <see cref="IEmployeeDirectory"/> lookups straight from the employee and unit tables.

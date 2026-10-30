@@ -1,7 +1,7 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// An application as its reader may see it. The candidate sees their own application and the raters they proposed; the result only from the

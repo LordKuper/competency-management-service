@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The approval route of matrix versions and who may read them, worked out from the org structure and the HR assignments at the

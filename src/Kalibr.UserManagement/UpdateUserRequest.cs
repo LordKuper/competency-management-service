@@ -1,4 +1,4 @@
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The fields of an existing account, all replaced at once so that omitting one never changes it by accident;

@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// An invitation the user can send again right from the desk, with the account version the request sends back in <c>If-Match</c>.

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A level of a track with its linked positions. The version is the level's, sent back in <c>If-Match</c> to link or unlink a position.

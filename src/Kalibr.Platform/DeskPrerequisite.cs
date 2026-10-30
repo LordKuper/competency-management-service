@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// A fact about the current data that a desk scenario needs before the user can start it.

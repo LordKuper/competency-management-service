@@ -1,10 +1,10 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The life of matrix versions: editing, the approval route and publication. Every status change holds, in this order, the tree lock in

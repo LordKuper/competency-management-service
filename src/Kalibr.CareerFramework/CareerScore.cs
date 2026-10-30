@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The rating of a candidate for a level of a matrix version and whether it makes the candidate ready.

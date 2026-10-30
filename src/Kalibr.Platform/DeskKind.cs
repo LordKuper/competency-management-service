@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// What a desk finding is. Variants of one finding that the desk absorbs differently are separate members.

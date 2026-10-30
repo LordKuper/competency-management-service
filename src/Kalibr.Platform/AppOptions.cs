@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Settings of the application as a whole, bound from the <c>App</c> configuration section.

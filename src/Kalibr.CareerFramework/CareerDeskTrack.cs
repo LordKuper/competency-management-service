@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A track with its levels other than inactive ones, in track order, and every link of its levels to positions, read in one query for the desk.

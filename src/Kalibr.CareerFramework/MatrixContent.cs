@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The content of a matrix version as one document: its levels with their readiness thresholds, the competencies outside blocks with

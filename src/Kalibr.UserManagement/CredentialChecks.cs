@@ -1,7 +1,7 @@
 using System.Net.Mail;
 using Microsoft.AspNetCore.Identity;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// The shape checks of e-mail addresses and passwords that every request carrying them shares; the password policy itself is Identity's, applied through its validators.

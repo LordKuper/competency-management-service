@@ -1,10 +1,10 @@
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Identity;
 
-namespace Competency.UserManagement;
+namespace Kalibr.UserManagement;
 
 /// <summary>
 /// A local account that signs in with an e-mail address and password.

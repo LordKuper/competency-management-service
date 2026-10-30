@@ -1,12 +1,12 @@
-using Competency.Audit;
-using Competency.CareerFramework;
-using Competency.Desk;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.Promotion;
-using Competency.UserManagement;
+using Kalibr.Audit;
+using Kalibr.CareerFramework;
+using Kalibr.Desk;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.Promotion;
+using Kalibr.UserManagement;
 
-namespace Competency.Api;
+namespace Kalibr.Api;
 
 /// <summary>
 /// Composes the platform and every module, shared by the running host and EF design-time tooling.

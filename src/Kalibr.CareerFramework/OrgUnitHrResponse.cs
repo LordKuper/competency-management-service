@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The HR of a unit: the one assigned to the unit itself and the one it would inherit from the nearest unit above with an assignment.

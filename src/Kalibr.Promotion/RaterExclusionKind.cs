@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What a rater exclusion names. Member names are stored, so renaming one changes the data.

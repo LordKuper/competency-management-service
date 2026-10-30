@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.Extensions.Options;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Tells which day it is and which stage a wave is in, in the time zone of the organization: a stage ends with the last moment of its last day there.

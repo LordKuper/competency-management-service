@@ -1,12 +1,12 @@
-using Competency.CareerFramework;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The API of the commission's review. The members of the commission of the unit of the target and administrators read the card of a candidate and the

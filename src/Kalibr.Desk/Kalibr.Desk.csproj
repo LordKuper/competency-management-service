@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Competency.Tests" />
+    <InternalsVisibleTo Include="Kalibr.Tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Competency.Platform\Competency.Platform.csproj" />
+    <ProjectReference Include="..\Kalibr.Platform\Kalibr.Platform.csproj" />
   </ItemGroup>
 
 </Project>

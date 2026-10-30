@@ -1,4 +1,4 @@
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// The number of expected actions on the signed-in user's desk.

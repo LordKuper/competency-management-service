@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// A replacement of the raters of an application: who proposes the list, and who vouches for the addresses it gives.

@@ -1,6 +1,6 @@
 using MailKit.Security;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The SMTP server mail is sent through, bound from the <c>Smtp</c> configuration section.

@@ -1,9 +1,9 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Reads the waves everybody sees: those that have not started and those taking applications, with what an application can aim at. Before

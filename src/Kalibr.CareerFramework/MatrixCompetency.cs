@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A competency of the version, the block it counts in and its type in the version. The block is one of the version's own blocks, a

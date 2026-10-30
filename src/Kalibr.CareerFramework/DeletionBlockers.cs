@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Gathers the records that keep an entry from being deleted, for the refusal to list. Every record counts, but only the first five the

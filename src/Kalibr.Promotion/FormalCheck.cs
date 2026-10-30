@@ -1,7 +1,7 @@
-using Competency.CareerFramework;
-using Competency.OrgStructure;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The formal check of an application: the interval since hiring or the last transition, and the education. The one place that decides it, for

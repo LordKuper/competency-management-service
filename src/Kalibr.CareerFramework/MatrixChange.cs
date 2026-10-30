@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// One item that differs between two documents of a version, named by the keys of its kind: a level, a shared

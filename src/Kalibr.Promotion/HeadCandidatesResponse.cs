@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The candidates of the units a head leads in a wave, the ones whose raters the head corrects.

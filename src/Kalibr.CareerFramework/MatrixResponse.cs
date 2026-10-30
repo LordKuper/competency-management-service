@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A competency matrix as the API returns it, with its published version and, for those who may read it, its version in work. A track

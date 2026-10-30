@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Answers <see cref="IUnitReferences"/> from the career tracks, shared blocks, matrices and HR assignment of a unit, on the request's database context.

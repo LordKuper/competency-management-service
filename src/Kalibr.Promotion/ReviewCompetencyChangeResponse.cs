@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// How the average of the raters for a competency moved since the latest earlier application of the candidate that got a decision.

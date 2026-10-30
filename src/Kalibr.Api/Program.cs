@@ -1,12 +1,12 @@
 using System.Reflection;
-using Competency.Api;
-using Competency.Audit;
-using Competency.CareerFramework;
-using Competency.Desk;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.Promotion;
-using Competency.UserManagement;
+using Kalibr.Api;
+using Kalibr.Audit;
+using Kalibr.CareerFramework;
+using Kalibr.Desk;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.Promotion;
+using Kalibr.UserManagement;
 using Microsoft.AspNetCore.DataProtection;
 
 const string ContractVersion = "1.0.0";

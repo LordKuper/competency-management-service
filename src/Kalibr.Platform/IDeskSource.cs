@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// One module's contribution to the signed-in user's desk: what the module's data expects of the user, or tells them for reference,

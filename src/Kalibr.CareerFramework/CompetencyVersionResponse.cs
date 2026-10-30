@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// One entry of a competency's version history: the competency as it stood after the change, and who made the change and when.

@@ -132,14 +132,14 @@
         "resolved": "10.0.13",
         "contentHash": "a+EovgC1fBnwdlQ6cn3j4JFBfKqiFaFvoAhjisOoSvazLAcIznaBzPQP0oYnvccmeXfqUH1KebVZOxSeH6rMaw=="
       },
-      "competency.orgstructure": {
+      "kalibr.orgstructure": {
         "type": "Project",
         "dependencies": {
           "ClosedXML": "[0.105.1, )",
-          "Competency.Platform": "[1.0.0, )"
+          "Kalibr.Platform": "[1.0.0, )"
         }
       },
-      "competency.platform": {
+      "kalibr.platform": {
         "type": "Project",
         "dependencies": {
           "MailKit": "[4.18.1, )",
@@ -149,11 +149,11 @@
           "System.Security.Cryptography.Pkcs": "[10.0.13, )"
         }
       },
-      "competency.usermanagement": {
+      "kalibr.usermanagement": {
         "type": "Project",
         "dependencies": {
-          "Competency.OrgStructure": "[1.0.0, )",
-          "Competency.Platform": "[1.0.0, )",
+          "Kalibr.OrgStructure": "[1.0.0, )",
+          "Kalibr.Platform": "[1.0.0, )",
           "Microsoft.AspNetCore.Identity.EntityFrameworkCore": "[10.0.12, )"
         }
       }

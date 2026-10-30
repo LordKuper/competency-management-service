@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A new matrix of a unit, for a track of a direction or for a position; none of them changes afterwards. A track matrix names the

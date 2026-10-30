@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What going back to an earlier stage resets or computes again. Member names are sent in the API, so renaming one changes it.

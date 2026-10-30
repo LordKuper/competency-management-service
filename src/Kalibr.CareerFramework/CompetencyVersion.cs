@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The state of a competency after one saved change, kept so its history can be read. Rows are only ever added, and deleted

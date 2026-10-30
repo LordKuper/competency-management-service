@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// The number of working employees who hold a position in any of their assignments and keep it when it is deactivated or taken off a unit's list.

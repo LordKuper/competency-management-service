@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Names of the authorization policies registered by the platform, for <c>RequireAuthorization</c>.

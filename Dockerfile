@@ -24,20 +24,20 @@ ENV ContinuousIntegrationBuild=true \
     DOTNET_CLI_TELEMETRY_OPTOUT=1
 WORKDIR /src
 COPY global.json Directory.Build.props ./
-COPY src/Competency.Api/Competency.Api.csproj src/Competency.Api/packages.lock.json src/Competency.Api/
-COPY src/Competency.Platform/Competency.Platform.csproj src/Competency.Platform/packages.lock.json src/Competency.Platform/
-COPY src/Competency.Audit/Competency.Audit.csproj src/Competency.Audit/packages.lock.json src/Competency.Audit/
-COPY src/Competency.OrgStructure/Competency.OrgStructure.csproj src/Competency.OrgStructure/packages.lock.json src/Competency.OrgStructure/
-COPY src/Competency.UserManagement/Competency.UserManagement.csproj src/Competency.UserManagement/packages.lock.json src/Competency.UserManagement/
-COPY src/Competency.CareerFramework/Competency.CareerFramework.csproj src/Competency.CareerFramework/packages.lock.json src/Competency.CareerFramework/
-COPY src/Competency.Promotion/Competency.Promotion.csproj src/Competency.Promotion/packages.lock.json src/Competency.Promotion/
-COPY src/Competency.Desk/Competency.Desk.csproj src/Competency.Desk/packages.lock.json src/Competency.Desk/
-RUN dotnet restore src/Competency.Api/Competency.Api.csproj
+COPY src/Kalibr.Api/Kalibr.Api.csproj src/Kalibr.Api/packages.lock.json src/Kalibr.Api/
+COPY src/Kalibr.Platform/Kalibr.Platform.csproj src/Kalibr.Platform/packages.lock.json src/Kalibr.Platform/
+COPY src/Kalibr.Audit/Kalibr.Audit.csproj src/Kalibr.Audit/packages.lock.json src/Kalibr.Audit/
+COPY src/Kalibr.OrgStructure/Kalibr.OrgStructure.csproj src/Kalibr.OrgStructure/packages.lock.json src/Kalibr.OrgStructure/
+COPY src/Kalibr.UserManagement/Kalibr.UserManagement.csproj src/Kalibr.UserManagement/packages.lock.json src/Kalibr.UserManagement/
+COPY src/Kalibr.CareerFramework/Kalibr.CareerFramework.csproj src/Kalibr.CareerFramework/packages.lock.json src/Kalibr.CareerFramework/
+COPY src/Kalibr.Promotion/Kalibr.Promotion.csproj src/Kalibr.Promotion/packages.lock.json src/Kalibr.Promotion/
+COPY src/Kalibr.Desk/Kalibr.Desk.csproj src/Kalibr.Desk/packages.lock.json src/Kalibr.Desk/
+RUN dotnet restore src/Kalibr.Api/Kalibr.Api.csproj
 COPY src/ src/
 # openapi.json is a committed contract, so the build-time document generation (it starts the app) stays off.
 # EntityFrameworkCore.Design and ApiDescription.Server are PrivateAssets="all" and do not reach the output.
 # wwwroot is dropped because the SPA stage is its only source in the image.
-RUN dotnet publish src/Competency.Api/Competency.Api.csproj -c Release -o /app --no-restore \
+RUN dotnet publish src/Kalibr.Api/Kalibr.Api.csproj -c Release -o /app --no-restore \
         -p:UseAppHost=false -p:OpenApiGenerateDocumentsOnBuild=false \
     && rm -rf /app/wwwroot
 
@@ -47,8 +47,8 @@ COPY --from=publish /app ./
 COPY --from=spa /src/web/dist ./wwwroot
 # Fallback for a run without the PVC; the Deployment mounts a volume at the same path.
 ENV ASPNETCORE_HTTP_PORTS=8080 \
-    DataProtection__KeysPath=/var/lib/competency/keys
+    DataProtection__KeysPath=/var/lib/kalibr/keys
 RUN mkdir -p "$DataProtection__KeysPath" && chown "$APP_UID:$APP_UID" "$DataProtection__KeysPath"
 USER $APP_UID
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Competency.Api.dll"]
+ENTRYPOINT ["dotnet", "Kalibr.Api.dll"]

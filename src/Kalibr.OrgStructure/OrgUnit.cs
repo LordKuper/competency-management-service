@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using NpgsqlTypes;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A node of the organization tree: a unit has at most one parent, so units form a forest without cycles.

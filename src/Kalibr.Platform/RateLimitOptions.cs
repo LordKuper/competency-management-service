@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// The request budget per client address of one rate-limiting policy, bound from its <c>RateLimiting</c> subsection.

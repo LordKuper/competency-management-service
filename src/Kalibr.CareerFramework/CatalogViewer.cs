@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What the signed-in user may see and do in the career catalogues, from their account roles and their process roles at the moment of asking.

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A shared block of a matrix version with its composition; a block has no scale, each of its competencies has its own.

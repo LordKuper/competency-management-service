@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The published version of the track matrix in effect in a unit of a wave, its own or inherited, that the wave is bound to for that unit when

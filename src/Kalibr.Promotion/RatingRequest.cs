@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The answers of a rater about a candidate, one for every competency of the version. The set is replaced.

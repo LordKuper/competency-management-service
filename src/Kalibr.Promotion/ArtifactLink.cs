@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// One artifact of a competency: what the candidate did and where the document that shows it is kept. The same shape is asked for, stored and served.

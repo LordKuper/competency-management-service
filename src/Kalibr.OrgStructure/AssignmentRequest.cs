@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// A secondary assignment of an employee as a request names it: the unit and position and the legal entities of the assignment.

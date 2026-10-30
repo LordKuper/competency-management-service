@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// An assignment of an employee as the API returns it: the unit and the position with their current names, the legal entities by name,

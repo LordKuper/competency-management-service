@@ -1,7 +1,7 @@
 using System.Net;
 using Xunit;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// A host with a database of its own whose scheduler passes every second, so that a stage change waits seconds. Each scene is a career session

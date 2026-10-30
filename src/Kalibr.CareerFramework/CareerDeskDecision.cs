@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// What the desk needs of a decision on a version in work: when it was taken and what the approver sent back with it.

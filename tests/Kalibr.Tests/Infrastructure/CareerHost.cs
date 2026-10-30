@@ -1,4 +1,4 @@
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// A host with a database of its own for a class of career tests. The tests of one class run one after another, so the locks a test holds and

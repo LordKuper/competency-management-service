@@ -1,7 +1,7 @@
-using Competency.Platform;
+using Kalibr.Platform;
 using Microsoft.Extensions.Logging;
 
-namespace Competency.Desk;
+namespace Kalibr.Desk;
 
 /// <summary>
 /// Works out the signed-in user's desk from the current data of every module on each call; the desk keeps nothing between requests,

@@ -1,8 +1,8 @@
-using Competency.CareerFramework;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The changes the end of a stage makes to a wave and its applications. Each method changes tracked rows and saves nothing, so the caller

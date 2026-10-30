@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A competency of the catalogue, of one direction or, without one, general. Every saved change also adds a <see cref="CompetencyVersion"/>.

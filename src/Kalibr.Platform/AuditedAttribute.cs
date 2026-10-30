@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Opts an entity class into the audit journal when placed on the class, and a property into the recorded values when placed on a property.

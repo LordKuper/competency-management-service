@@ -2,10 +2,10 @@ using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The one rule of making career entries active: an approval publishes every draft the entry refers to or nothing at all, shows the list

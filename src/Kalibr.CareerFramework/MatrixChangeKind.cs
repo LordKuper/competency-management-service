@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The kind of item a <see cref="MatrixChange"/> concerns. Member names are sent in the API, so renaming one changes it.

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Sends mail through the SMTP server from <see cref="SmtpOptions"/>, one connection per message, as <c>multipart/alternative</c>:

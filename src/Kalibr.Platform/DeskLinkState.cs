@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// Why an invitation link no longer works or soon will not. Member names are sent in the API, so renaming one changes it.

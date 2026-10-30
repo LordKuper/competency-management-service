@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The weight, in percent, of a competency in the score of its group on a level, set for a group that has its own weights. The weights

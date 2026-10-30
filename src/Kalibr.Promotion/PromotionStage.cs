@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// The numbers of the stages of a wave, in their order. The end of a stage is the deadline of its work, which may be done earlier. The results are

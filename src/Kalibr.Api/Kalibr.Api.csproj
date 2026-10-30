@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <InternalsVisibleTo Include="Competency.Tests" />
+    <InternalsVisibleTo Include="Kalibr.Tests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -18,13 +18,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Competency.Platform\Competency.Platform.csproj" />
-    <ProjectReference Include="..\Competency.Audit\Competency.Audit.csproj" />
-    <ProjectReference Include="..\Competency.OrgStructure\Competency.OrgStructure.csproj" />
-    <ProjectReference Include="..\Competency.UserManagement\Competency.UserManagement.csproj" />
-    <ProjectReference Include="..\Competency.CareerFramework\Competency.CareerFramework.csproj" />
-    <ProjectReference Include="..\Competency.Promotion\Competency.Promotion.csproj" />
-    <ProjectReference Include="..\Competency.Desk\Competency.Desk.csproj" />
+    <ProjectReference Include="..\Kalibr.Platform\Kalibr.Platform.csproj" />
+    <ProjectReference Include="..\Kalibr.Audit\Kalibr.Audit.csproj" />
+    <ProjectReference Include="..\Kalibr.OrgStructure\Kalibr.OrgStructure.csproj" />
+    <ProjectReference Include="..\Kalibr.UserManagement\Kalibr.UserManagement.csproj" />
+    <ProjectReference Include="..\Kalibr.CareerFramework\Kalibr.CareerFramework.csproj" />
+    <ProjectReference Include="..\Kalibr.Promotion\Kalibr.Promotion.csproj" />
+    <ProjectReference Include="..\Kalibr.Desk\Kalibr.Desk.csproj" />
   </ItemGroup>
 
 </Project>

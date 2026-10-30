@@ -1,10 +1,10 @@
 using AwesomeAssertions;
-using Competency.Platform;
-using Competency.Promotion;
+using Kalibr.Platform;
+using Kalibr.Promotion;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The dates of a career session and what follows from them: which dates are accepted, which stage a session is in at a moment of the

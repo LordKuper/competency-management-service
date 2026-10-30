@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// An earlier application of a candidate that got a decision and whose results were published, as the commission sees it. Readiness and the critical

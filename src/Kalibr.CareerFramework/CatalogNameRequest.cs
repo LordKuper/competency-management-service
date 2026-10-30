@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The name of a catalogue entry, for creating a direction and renaming it or a track; entry requests with more fields extend it.

@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// The catalogue entries the desk reads: the drafts the user can read, levels aside, and the directions, competencies and shared blocks the published matrices are checked against.

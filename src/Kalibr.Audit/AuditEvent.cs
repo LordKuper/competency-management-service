@@ -1,4 +1,4 @@
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// One row of the append-only audit journal: who did what to which entity, when, and under which request.

@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What a candidate learns of the outcome once the results are published: the final scores against the requirements and the decision. It holds no

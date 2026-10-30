@@ -1,4 +1,4 @@
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// A competency of a matrix version with the number of its version at the time, its own scale, which its scores are points of, its type

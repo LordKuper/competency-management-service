@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure.Import;
+namespace Kalibr.OrgStructure.Import;
 
 /// <summary>
 /// A unit of the file's tree, matched with an existing unit or to be created. Its id is the existing one, or the new one once the apply has created it.

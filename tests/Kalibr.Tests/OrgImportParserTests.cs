@@ -2,11 +2,11 @@ using System.IO.Compression;
 using System.Text;
 using AwesomeAssertions;
 using ClosedXML.Excel;
-using Competency.OrgStructure.Import;
-using Competency.Tests.Infrastructure;
+using Kalibr.OrgStructure.Import;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// How the uploaded workbook is read: the columns it must have, the rules of a row, the full list of errors, and the protection of the server from

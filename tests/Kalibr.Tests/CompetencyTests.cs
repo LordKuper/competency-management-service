@@ -2,10 +2,10 @@ using System.Net;
 using System.Text.Json.Nodes;
 using AwesomeAssertions;
 using AwesomeAssertions.Execution;
-using Competency.Tests.Infrastructure;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// The competency catalogue: a competency refers to a direction or none and a scale, a request without a scale gets the

@@ -1,4 +1,4 @@
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// What a rater sees of a candidate: the name and the competencies to answer about, with the rater's own answers if they gave any.

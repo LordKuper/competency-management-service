@@ -1,4 +1,4 @@
-namespace Competency.Platform;
+namespace Kalibr.Platform;
 
 /// <summary>
 /// One audit event as its raiser describes it; the writer adds the time, and the actor, role and request id unless overridden.

@@ -1,6 +1,6 @@
-using Competency.Platform;
+using Kalibr.Platform;
 
-namespace Competency.Audit;
+namespace Kalibr.Audit;
 
 /// <summary>
 /// One page of journal rows, newest first. It exists only to keep the <c>AuditPageResponse</c> schema name of the published contract.

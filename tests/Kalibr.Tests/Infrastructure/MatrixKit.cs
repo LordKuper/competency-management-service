@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json.Nodes;
 
-namespace Competency.Tests.Infrastructure;
+namespace Kalibr.Tests.Infrastructure;
 
 /// <summary>
 /// A matrix of the team of a <see cref="CareerOrg"/> on a fresh direction and track with two levels and two competencies on the base scale,

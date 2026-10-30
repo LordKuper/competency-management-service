@@ -1,4 +1,4 @@
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// One place an employee works at, read through a query that lists the main assignment and every secondary one alike,

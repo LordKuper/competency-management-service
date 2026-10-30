@@ -1,9 +1,9 @@
 using AwesomeAssertions;
-using Competency.Platform;
-using Competency.Tests.Infrastructure;
+using Kalibr.Platform;
+using Kalibr.Tests.Infrastructure;
 using Xunit;
 
-namespace Competency.Tests;
+namespace Kalibr.Tests;
 
 /// <summary>
 /// Every letter goes out as text with an HTML twin built by one rule: paragraphs, clickable links named by the line above them, and no markup

@@ -1,9 +1,9 @@
-using Competency.OrgStructure.Import;
-using Competency.Platform;
+using Kalibr.OrgStructure.Import;
+using Kalibr.Platform;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Competency.OrgStructure;
+namespace Kalibr.OrgStructure;
 
 /// <summary>
 /// Entry points through which the host composes the OrgStructure module.

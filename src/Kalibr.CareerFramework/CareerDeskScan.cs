@@ -1,9 +1,9 @@
 using System.Diagnostics;
-using Competency.OrgStructure;
-using Competency.Platform;
-using Competency.UserManagement;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Kalibr.UserManagement;
 
-namespace Competency.CareerFramework;
+namespace Kalibr.CareerFramework;
 
 /// <summary>
 /// Works out the career findings of one user's desk in memory from data read beforehand, through the same rule functions the module acts

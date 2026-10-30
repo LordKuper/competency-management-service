@@ -1,10 +1,10 @@
 using System.Globalization;
-using Competency.CareerFramework;
-using Competency.OrgStructure;
-using Competency.Platform;
+using Kalibr.CareerFramework;
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
 using Microsoft.EntityFrameworkCore;
 
-namespace Competency.Promotion;
+namespace Kalibr.Promotion;
 
 /// <summary>
 /// Checks the units a wave is given: they exist and work, the actor answers for them, no unfinished wave has them already, and the commission of

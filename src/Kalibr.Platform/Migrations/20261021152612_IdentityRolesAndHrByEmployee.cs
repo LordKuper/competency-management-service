@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace Competency.Platform.Migrations
+namespace Kalibr.Platform.Migrations
 {
     /// <summary>
     /// Moves account roles from the <c>users.role</c> column to the Identity tables <c>roles</c> and <c>user_roles</c>, and the responsible HR
