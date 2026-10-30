@@ -114,6 +114,30 @@ public sealed class PromotionWaveTests(CareerHost fixture, TestEnvironment envir
     }
 
     [Fact]
+    public async Task Ac25_TheResponsibleHrAndTheHeadAreAlwaysInTheCommission_WhoeverIsSaved()
+    {
+        var org = await CareerOrg.CreateAsync(fixture.Host);
+        var route = $"/api/v1/promotion/commissions/{org.Team.Id}";
+
+        var beforeSaving = (await org.Admin.GetAsync(route)).Expect(HttpStatusCode.OK).Json!["members"]!.AsArray();
+        (await PromotionScene.SaveCommissionAsync(org.Admin, org.Team.Id, [org.DepartmentHead.Employee], org.DepartmentHead.Employee)).Expect(HttpStatusCode.OK);
+        var withExtra = (await org.Admin.GetAsync(route)).Expect(HttpStatusCode.OK).Json!["members"]!.AsArray();
+        (await PromotionScene.SaveCommissionAsync(org.Admin, org.Team.Id, [], null)).Expect(HttpStatusCode.OK);
+        var emptied = (await org.Admin.GetAsync(route)).Expect(HttpStatusCode.OK).Json!["members"]!.AsArray();
+
+        foreach (var members in new[] { beforeSaving, withExtra, emptied })
+        {
+            members.Where(member => member!["isRequired"]!.GetValue<bool>()).Select(member => member!["employeeId"]!.GetValue<Guid>())
+                .Should().BeEquivalentTo([org.TeamHead.Employee, org.Hr.Employee]);
+            members.Single(member => member!["employeeId"]!.GetValue<Guid>() == org.TeamHead.Employee)!["isHead"]!.GetValue<bool>().Should().BeTrue();
+            members.Single(member => member!["employeeId"]!.GetValue<Guid>() == org.Hr.Employee)!["isResponsibleHr"]!.GetValue<bool>().Should().BeTrue();
+        }
+
+        withExtra.Select(member => member!["employeeId"]!.GetValue<Guid>()).Should().Contain(org.DepartmentHead.Employee);
+        emptied.Select(member => member!["employeeId"]!.GetValue<Guid>()).Should().NotContain(org.DepartmentHead.Employee);
+    }
+
+    [Fact]
     public async Task Ac86_AUnitWhoseCommissionHasNoChair_IsAnActionOnTheDeskOfItsHrAndTheAdministrator_UntilAChairIsNamed()
     {
         var org = await CareerOrg.CreateAsync(fixture.Host);

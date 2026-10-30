@@ -26,6 +26,7 @@ public sealed class RowLock : IAsyncDisposable
 
     public const long TreeKey = 5_001_001;
     public const long CatalogueKey = 5_003_001;
+    public const long PromotionKey = 5_006_001;
 
     public static Task<RowLock> HoldAsync(ApiHost host, Guid userId) => HoldAsync(host, $"SELECT id FROM users WHERE id = '{userId}' FOR UPDATE");
 
@@ -46,6 +47,14 @@ public sealed class RowLock : IAsyncDisposable
     /// <param name="matrixId">The matrix.</param>
     public static Task<RowLock> HoldMatrixAsync(ApiHost host, Guid matrixId) =>
         HoldAsync(host, $"SELECT id FROM competency_matrices WHERE id = '{matrixId}' FOR UPDATE");
+
+    /// <summary>
+    /// Holds the row of a career session, which every change of its applications locks.
+    /// </summary>
+    /// <param name="host">The host whose database is locked.</param>
+    /// <param name="waveId">The session.</param>
+    public static Task<RowLock> HoldWaveAsync(ApiHost host, Guid waveId) =>
+        HoldAsync(host, $"SELECT id FROM promotion_waves WHERE id = '{waveId}' FOR UPDATE");
 
     /// <summary>
     /// Sends a request that must stop at a lock another connection holds, and returns it once it is waiting.

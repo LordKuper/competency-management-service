@@ -127,6 +127,30 @@ public sealed class MailCatcher : IAsyncDisposable
     }
 
     /// <summary>
+    /// Waits until the recipient has received a message whose body contains the fragment, usually the path of the screen its link opens.
+    /// </summary>
+    /// <param name="recipient">The recipient's address.</param>
+    /// <param name="fragment">The text the body must contain.</param>
+    /// <returns>The messages with the fragment the recipient has received so far.</returns>
+    public async Task<CapturedMail[]> WaitForContainingAsync(string recipient, string fragment)
+    {
+        CapturedMail[] found = [];
+        await Waiting.UntilAsync(
+            async () => (found = await FindContainingAsync(recipient, fragment)).Length > 0,
+            $"a message with {fragment} reached {recipient}");
+        return found;
+    }
+
+    /// <summary>
+    /// Reads the messages with the fragment in their body that the recipient has received so far.
+    /// </summary>
+    /// <param name="recipient">The recipient's address.</param>
+    /// <param name="fragment">The text the body must contain.</param>
+    /// <returns>The messages, oldest first.</returns>
+    public async Task<CapturedMail[]> FindContainingAsync(string recipient, string fragment) =>
+        [.. (await FindAsync(recipient)).Where(mail => mail.Text.Contains(fragment, StringComparison.Ordinal))];
+
+    /// <summary>
     /// Reads what the recipient has received so far.
     /// </summary>
     /// <param name="recipient">The recipient's address.</param>

@@ -193,6 +193,28 @@ public sealed class PromotionWaveScheduleTests
     }
 
     [Fact]
+    public void Ac66_ApplicationsHeldForWantOfAChair_AreOwedAHandOver_FromTheRatingCheckToTheEndOfTheReviewStage()
+    {
+        var wave = Wave(FirstDay);
+        wave.VersionsFixed = true;
+        var ratingRunning = CalendarAt(Moscow(wave.EndsOn[1].AddDays(1)));
+        var artifactStage = CalendarAt(Moscow(wave.EndsOn[2].AddDays(1)));
+        var reviewStage = CalendarAt(Moscow(wave.EndsOn[3].AddDays(1)));
+        var feedbackStage = CalendarAt(Moscow(wave.EndsOn[4].AddDays(1)));
+
+        wave.ProcessedStage = 2;
+        DueStep.Next(wave, ratingRunning, hasArrivals: false, hasAdmitted: true).Should().BeNull("nothing is admitted for the commission before the rating check");
+        wave.ProcessedStage = 3;
+        DueStep.Next(wave, artifactStage, hasArrivals: false, hasAdmitted: true).Should().Be(new DueStep(DueKind.ReachHeld, PromotionStage.Artifacts));
+        DueStep.Next(wave, artifactStage, hasArrivals: false, hasAdmitted: false).Should().BeNull();
+        DueStep.Next(wave, artifactStage, hasArrivals: true, hasAdmitted: true).Should().Be(new DueStep(DueKind.NotifyCommissions, PromotionStage.Artifacts), "the letters of arrived applications come first");
+        wave.ProcessedStage = 4;
+        DueStep.Next(wave, reviewStage, hasArrivals: false, hasAdmitted: true).Should().Be(new DueStep(DueKind.ReachHeld, PromotionStage.Review));
+        wave.ProcessedStage = 5;
+        DueStep.Next(wave, feedbackStage, hasArrivals: false, hasAdmitted: true).Should().BeNull("the commission stage is over, the held ones have no decision");
+    }
+
+    [Fact]
     public void Ac63_TheRatersAreRemindedOnce_WhenLessThanTwoDaysOfTheRatingStageRemain()
     {
         var wave = Wave(FirstDay);

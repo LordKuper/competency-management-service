@@ -184,6 +184,76 @@ public sealed class PromotionApplicationTests(PromotionHost fixture) : IClassFix
         byOtherHr.Status.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task Ac47_TwoApplicationsOfOneCandidateFiledAtTheSameMoment_LeaveExactlyOneInTheSession()
+    {
+        var scene = await fixture.SceneAsync();
+        var candidate = await scene.NewCandidateAsync();
+        var raters = await scene.NewRatersAsync(3, 2);
+        var file = () => candidate.Client.PostAsync(Applications, scene.ApplicationBody(raters));
+        await using var held = await RowLock.HoldWaveAsync(scene.Host, scene.WaveId);
+        var first = await RowLock.StartWaitingAsync(scene.Host, 1, file);
+        var second = await RowLock.StartWaitingAsync(scene.Host, 2, file);
+
+        await held.ReleaseAsync();
+        var results = await Task.WhenAll(first, second);
+
+        results[0].Status.Should().Be(HttpStatusCode.Created, "the request that took the wave first files the application");
+        results[1].Status.Should().Be(HttpStatusCode.Conflict, "the second finds the first one unfinished");
+        (await scene.Host.ScalarAsync<long>($"SELECT count(*) FROM promotion_applications WHERE wave_id = '{scene.WaveId}' AND employee_id = '{candidate.Employee}'")).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Ac61_TheHeadOfTheTargetUnitChangesTheRaters_AndConfirmsTheAddressOfOneWithoutAnAccount_AfterTheApplicationIsFiled()
+    {
+        var scene = await fixture.SceneAsync();
+        var candidate = await scene.NewCandidateAsync();
+        var colleague = await scene.NewCandidateAsync();
+        var raters = await scene.NewRatersAsync(3, 2);
+        var submitted = await scene.SubmitAsync(candidate, raters);
+        var withoutAccount = (await scene.Org.Admin.CreateEmployeeAsync(scene.Org.Sibling.Id, position: "Инженер")).Id;
+        var raterRoute = $"{Applications}/{submitted.Id}/raters";
+        var address = $"{Scenarios.Unique("rater")}@test.local";
+        var changed = raters.Skip(1).Select(rater => new { employeeId = rater.Employee, email = (string?)null }).Append(new { employeeId = withoutAccount, email = (string?)address }).ToArray();
+
+        var tooFew = await scene.Org.TeamHead.Client.PutAsync(raterRoute, new { raters = changed[..3] }, submitted.ETag);
+        var edited = (await scene.Org.TeamHead.Client.PutAsync(raterRoute, new { raters = changed }, submitted.ETag)).Expect(HttpStatusCode.OK);
+        var corrected = (await scene.Org.TeamHead.Client.PutAsync($"{raterRoute}/{withoutAccount}/email", new { email = $"again-{address}" }, edited.ETag)).Expect(HttpStatusCode.OK);
+        var byCandidate = await candidate.Client.PutAsync(raterRoute, new { raters = changed }, corrected.ETag);
+        var byColleague = await colleague.Client.PutAsync(raterRoute, new { raters = changed }, corrected.ETag);
+        var byOtherHead = await scene.Org.SiblingHead.Client.PutAsync(raterRoute, new { raters = changed }, corrected.ETag);
+
+        tooFew.Status.Should().Be(HttpStatusCode.BadRequest);
+        tooFew.FieldErrors("raters").Should().Contain(error => error.Contains("не меньше 5"), "the rule of five holds after the head's change too");
+        var rows = edited.Json!["raters"]!.AsArray();
+        rows.Select(rater => rater!["employeeId"]!.GetValue<Guid>()).Should().BeEquivalentTo([.. changed.Select(rater => rater.employeeId)]);
+        var added = rows.Single(rater => rater!["employeeId"]!.GetValue<Guid>() == withoutAccount)!;
+        added["source"]!.GetValue<string>().Should().Be("Head");
+        added["isEmailConfirmed"]!.GetValue<bool>().Should().BeTrue("an address the head enters is confirmed by that");
+        corrected.Json!["raters"]!.AsArray().Single(rater => rater!["employeeId"]!.GetValue<Guid>() == withoutAccount)!["email"]!.GetValue<string>().Should().Be($"again-{address}");
+        byCandidate.Status.Should().Be(HttpStatusCode.Conflict, "once filed, the list is the head's to change");
+        byColleague.Status.Should().Be(HttpStatusCode.NotFound);
+        byOtherHead.Status.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Ac61_TheListOfRatersIsFinal_WhenTheFormalCheckStageEnds()
+    {
+        var scene = await fixture.NewSceneAsync();
+        var candidate = await scene.NewCandidateAsync();
+        var raters = await scene.NewRatersAsync(3, 2);
+        var admitted = await scene.SubmitForAdmissionAsync(candidate, raters);
+        var same = new { raters = raters.Select(rater => new { employeeId = rater.Employee, email = (string?)null }).ToArray() };
+        var raterRoute = $"{Applications}/{admitted.Id}/raters";
+
+        await scene.PutInStageAsync(2);
+        var duringCheck = (await scene.Org.TeamHead.Client.PutAsync(raterRoute, same, admitted.ETag)).Expect(HttpStatusCode.OK);
+        await scene.PutInStageAsync(3);
+        var afterCheck = await scene.Org.TeamHead.Client.PutAsync(raterRoute, same, duringCheck.ETag);
+
+        afterCheck.Status.Should().Be(HttpStatusCode.Conflict);
+    }
+
     private static async Task<ApiResponse> RefusedSubmitAsync(Member candidate, PromotionScene scene, Member[] raters)
     {
         var draft = (await candidate.Client.PostAsync(Applications, scene.ApplicationBody(raters))).Expect(HttpStatusCode.Created);
