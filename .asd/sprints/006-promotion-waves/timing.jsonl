@@ -245,3 +245,5 @@
 {"op":"close","id":"suite cleanup#1","kind":"suite","parent":"cleanup#1","start":"2026-10-30T12:27:05.628Z","end":"2026-10-30T12:27:15.290Z","outcome":"done","attrs":{"scope":"impacted"}}
 {"op":"close","id":"cleanup#1","kind":"phase","parent":null,"start":"2026-10-30T12:23:52.410Z","end":"2026-10-30T12:27:48.659Z","outcome":"done","attrs":{}}
 {"op":"open","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-30T12:27:48.659Z","attrs":{}}
+{"op":"close","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-30T12:27:48.659Z","end":"2026-10-30T12:37:58.740Z","outcome":"done","attrs":{}}
+{"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-30T12:37:58.740Z","attrs":{}}
