@@ -50,7 +50,7 @@ internal readonly record struct DueStep(DueKind Kind, int Stage)
     /// <param name="wave">The wave.</param>
     /// <param name="calendar">The clock of the organization.</param>
     /// <param name="hasArrivals">Whether applications have reached a commission whose members have not been told.</param>
-    /// <param name="hasAdmitted">Whether some application of the wave still waits, admitted, to reach a commission. Whether one can is for the step to find out.</param>
+    /// <param name="hasAdmitted">Whether some admitted application of the wave can move now: one that meets the mandatory requirements, or any once the artifact stage has ended. Whether its commission has a chair who acts is for the step to find out.</param>
     /// <returns>The step; <see langword="null"/> when the wave is up to date.</returns>
     public static DueStep? Next(PromotionWave wave, PromotionCalendar calendar, bool hasArrivals, bool hasAdmitted = false)
     {
