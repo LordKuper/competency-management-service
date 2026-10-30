@@ -52,6 +52,38 @@ public sealed class PromotionHeldApplicationTests(PromotionHost fixture, TestEnv
     }
 
     [Fact]
+    public async Task Ac94_AUnitWithoutAChair_TellsItsHrOfTheHeldApplicationsOnceInTheSession_AndNoOtherHr()
+    {
+        var session = await RatedSessionWithoutSiblingChairAsync();
+        var scene = session.Scene;
+        var unitLink = $"promotion/commissions?unit={scene.Org.Sibling.Id}";
+
+        await scene.PutInStageAsync(5);
+
+        var letter = (await environment.Mail.WaitForContainingAsync(scene.Org.SiblingHr.User.Email, unitLink)).Should().ContainSingle().Subject;
+        letter.Text.Should().Contain(scene.Org.Sibling.Json!["name"]!.GetValue<string>()).And.Contain("нет председателя").And.Contain("(1)");
+        await scene.PutInStageAsync(6);
+        (await environment.Mail.FindContainingAsync(scene.Org.SiblingHr.User.Email, unitLink)).Should().ContainSingle("the scheduler passed the held unit again and again, and told once");
+        (await environment.Mail.FindContainingAsync(scene.Org.Hr.User.Email, unitLink)).Should().BeEmpty("the HR of the sibling answers for it, not the HR above");
+        (await environment.Mail.FindContainingAsync(scene.Org.Hr.User.Email, $"promotion/commissions?unit={scene.Org.Team.Id}")).Should().BeEmpty("the team has a chair");
+    }
+
+    [Fact]
+    public async Task Ac94_AUnitWithoutAChairAndWithoutAnHrUpTheTree_TellsTheAdministrators()
+    {
+        var session = await RatedSessionWithoutSiblingChairAsync();
+        var scene = session.Scene;
+        var unitLink = $"promotion/commissions?unit={scene.Org.Sibling.Id}";
+        (await scene.Org.Admin.DeleteAsync($"/api/v1/career/org-units/{scene.Org.Sibling.Id}/hr")).Expect(HttpStatusCode.NoContent);
+        (await scene.Org.Admin.DeleteAsync($"/api/v1/career/org-units/{scene.Org.Root.Id}/hr")).Expect(HttpStatusCode.NoContent);
+
+        await scene.PutInStageAsync(5);
+
+        (await environment.Mail.WaitForContainingAsync(ApiHost.AdminEmail, unitLink)).Should().ContainSingle();
+        (await environment.Mail.FindContainingAsync(scene.Org.SiblingHr.User.Email, unitLink)).Should().BeEmpty("the HR no longer answers for the unit");
+    }
+
+    [Fact]
     public async Task Ac66_AnApplicationHeldForWantOfAChairToTheEnd_GetsNoDecisionWhileTheOthersAreDecided()
     {
         var session = await RatedSessionWithoutSiblingChairAsync();
