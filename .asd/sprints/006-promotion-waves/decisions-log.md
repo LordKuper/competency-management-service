@@ -190,3 +190,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl completion gate passed at e49adf2d: `dotnet build` 0/0, no pending model changes after the migration, web lint, build, check:api clean; diff a1dba540..HEAD only in finding paths (src/Competency.Promotion, migrations, useUnitTreeSearch.ts, PromotionScene.cs, test-plan.md)
 - 2026-10-30 — impl fix for wave-1/iter-02: findings resolved
 - 2026-10-30 — route impl-test entry 4: standard, dispatch HEAD e77cb1f8
+- 2026-10-30 — impl-test: impacted set green (полный набор по предохранителю: backend 952/952, web 850/850 после повторного прогона — одиночный тайм-аут `auth/linkScreens.test.tsx` вне дельты, отдельно 18/18; проверка оркестратора: новые тесты backend 33/33, exit 0), 5/0 tests; риск сброса IsSentToReview снят чтением кода (отправка без председателя — 409)
