@@ -57,3 +57,14 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — memory-fix: asd-dev leftover-term hits (perf-measure-temp-db, hosted-service-ctor-options) fixed by owner, 746be450
 - 2026-10-30 — memory-fix: asd-tester leftover-term hits (backend-tests-scratch-build) fixed by owner, AC-14 and AC-19 recorded (threshold-is-contract, suite-timing-operation), 1718aa70
 - 2026-10-30 — impl-test: impacted set green (full suite by safety valve: .NET 952/952, web 850/850 @1718aa70), 0/0 tests
+
+## 2026-10-30 — impl-review: runtime git calls run in a Linux container
+
+- **Decision**: Выбор пользователя — вариант A (рекомендация advisor). Шаги `review-waves` и `emit-manifest` выполняет тот же неизменённый `.asd/runtime.js` в контейнере `node:24.21.0-trixie`: репозиторий примонтирован, `safe.directory` задан через env. Остальные шаги идут на Windows как обычно.
+- **Rationale**: На Windows один вызов git со всеми путями диффа (~60 000 символов) превышает лимит CreateProcess в 32 767 символов (F-1). Править инфраструктуру нельзя. Диффы строятся по диапазону коммитов, поэтому результат от ОС не зависит. Advisor: A не требует hard gate. B стопорит готовый спринт. C — waiver ревью, и до лимита он всё равно не ужимает.
+- **Affected docs**: [friction-log.md](friction-log.md)
+- 2026-10-30 — combined interrupted attempt 1 in wave-1/iter-01 (stall: host watchdog, no progress 600s)
+- 2026-10-30 — external interrupted attempt 1 in wave-1/iter-01 (session ended before return)
+- 2026-10-30 — memory-fix: asd-advisor memory-check hits (sprint id in project_windows-arg-limit-review-waves, MEMORY.md line) fixed by owner's MEMORY-FIX block, applied by orchestrator, 0fe76f5b
+- 2026-10-30 — external wave-1/iter-01 persisted APPROVE without its `Interrupted attempts: 1 (session ended before return)` line (persist-review refuses a second write); the attempt record stands in this log
+- 2026-10-30 — impl-review wave-1/iter-01: combined APPROVE, external APPROVE — reviewer DoD met (single wave), latched combined, external; terminal full suite next
