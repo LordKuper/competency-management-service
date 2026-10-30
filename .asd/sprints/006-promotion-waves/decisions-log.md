@@ -183,3 +183,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl-review wave-1/iter-02 verdicts: combined CONCERNS (F1–F6: 1 critical, 2 high, 1 medium, 2 low; без вопросов), external APPROVE (skipped).
 - 2026-10-30 — memory-fix asd-advisor (wave-1/iter-02 F6): строка Why в feedback_escalation-option-consult.md без истории спринта
 - 2026-10-30 — impl-review wave-1/iter-02: unresolved findings combined F1–F5 → impl review-fix (review_fixes_pending=wave-1/iter-02); F6 закрыт memory-fix
+- 2026-10-30 — route F1, F3, F4 (wave-1/iter-02 combined): standard, dispatch HEAD 8c8f56d1; risk F1 security (change)

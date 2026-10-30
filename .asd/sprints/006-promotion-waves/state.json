@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "impl-review",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -420,6 +420,24 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "wave-1/iter-02 F1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
+    },
+    "wave-1/iter-02 F3": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
+    },
+    "wave-1/iter-02 F4": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -454,7 +472,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T10:49:13.072Z",
+  "updated_at": "2026-10-30T10:49:58.116Z",
   "review_fixes_pending": "wave-1/iter-02",
   "test_defects_pending": null,
   "pr": null,
