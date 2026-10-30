@@ -31,7 +31,6 @@
 - [Anonymous link screens](project_web-anonymous-link-screens-facts.md) — StrictMode-safe fragment token, router links styled as antd, empty 202, invalid-link 400 shape
 - [Career catalogue facts](project_career-catalogue-facts.md) — jsonb points via converter (complex types skip audit), link tables miss If-Match, Russian build output, unverified ILIKE equality
 - [Career record deletion](project_career-record-deletion-facts.md) — jsonb containment check, explicit Deleted for unaudited history rows, matrix If-Match target, shared lock on content edits
-- [Typed problem extensions](project_typed-problem-extension-facts.md) — ProblemDetails subclass + Produces<T> for typed 409, composable SqlQuery ids; scratch PG check impl-test / tester only
 - [Matrix workflow facts](project_matrix-workflow-facts.md) — same-column filtered indexes collapse unless named, ef migrations remove needs a DB, multi-heredoc bash breaks
 - [EF save-batch ordering](project_ef-save-batch-ordering-facts.md) — unique-index swap cycle, FK error before 412, name check blind to tracked drafts, enum ceilings, trailer -m
 - [Scripted insert orphans a summary](project_scripted-insert-doc-orphan.md) — inserting before a signature moves its XML doc onto the new member; anchor on `}` or `/// <summary>`
