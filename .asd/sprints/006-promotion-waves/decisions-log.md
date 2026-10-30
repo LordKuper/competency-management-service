@@ -199,3 +199,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — impl completion gate passed at a9709ef6: `dotnet build` 0/0, no pending model changes, web lint, build, check:api clean; diff a3582a21..HEAD only src/Competency.Promotion/DueStep.cs
 - 2026-10-30 — impl fix for wave-1/iter-03: findings resolved
 - 2026-10-30 — route impl-test entry 5: standard, dispatch HEAD a9709ef6
+- 2026-10-30 — impl-test: impacted set green (PromotionWaveScheduleTests 14/14, exit 0, перепроверено оркестратором; build 0/0, web lint чисто), 0/0 tests (комментарий без поведения, решение none)

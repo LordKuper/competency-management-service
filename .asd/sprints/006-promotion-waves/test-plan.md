@@ -15,7 +15,7 @@ responsibility:
 | 2 | 0a2ae2834d7d84621b92648f16241b4d21ed30cb | delta since entry 1 (`3659c0ae`, фикс D-1: `CommissionReader.ReadAsync`) |
 | 3 | 47b455e4e6716896e4f6652118fc13b1eaeb98aa | delta since entry 2 (`0a2ae283`): review-fix wave-1/iter-01 (F1–F10), Task 28 (AC-94, AC-95), правка веб-поиска подразделений (`useUnitTreeSearch`) |
 | 4 | 905a7fa938d04a53117fc8a465acb9892e0d5e27 | delta since entry 3 (`47b455e4`): review-fix wave-1/iter-02 (F1 `WasHeldAtClose` и миграция, F2 `PromotionScene`, F3 JSDoc `useUnitTreeSearch`, F4 условие передачи в `WaveStep`/`PromotionTick`) |
-| 5 | | delta since entry 4 (`905a7fa9`): review-fix wave-1/iter-03 F1 — комментарий `hasAdmitted` в `DueStep.cs` |
+| 5 | 25f8198d6ebf8db47a6121f890079cf033b3ab15 | delta since entry 4 (`905a7fa9`): review-fix wave-1/iter-03 F1 — комментарий `hasAdmitted` в `DueStep.cs` |
 
 ## Risk → check decisions
 
