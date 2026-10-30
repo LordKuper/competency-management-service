@@ -68,3 +68,5 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — memory-fix: asd-advisor memory-check hits (sprint id in project_windows-arg-limit-review-waves, MEMORY.md line) fixed by owner's MEMORY-FIX block, applied by orchestrator, 0fe76f5b
 - 2026-10-30 — external wave-1/iter-01 persisted APPROVE without its `Interrupted attempts: 1 (session ended before return)` line (persist-review refuses a second write); the attempt record stands in this log
 - 2026-10-30 — impl-review wave-1/iter-01: combined APPROVE, external APPROVE — reviewer DoD met (single wave), latched combined, external; terminal full suite next
+- 2026-10-30 — route impl-review wave-1/iter-01 suite: standard, dispatch HEAD a2f3855b
+- 2026-10-30 — impl-review terminal full suite green (ec1fad8f; HEAD a2f3855b: .NET 952/952, web 850/850, lint и build exit 0) → DoD met; impl-review green handoff (gate adaptive, оркестратор): открытых находок и дефектов нет; NEXT design-promote
