@@ -42,6 +42,8 @@ function keysOf<TNode extends SearchableNode<TNode>>(
  * Props that make a unit TreeSelect filter its own tree. rc-tree-select would filter and re-expand the whole tree
  * synchronously on every keystroke; here the typed text shows at once and the tree follows from a deferred render.
  * The popup gets a fixed width, because the app-wide `popupMatchSelectWidth={false}` would make the list non-virtual.
+ * `treeNodeFilterProp` stays so the tree still marks matches although `filterTreeNode` is off; while searching the expansion is
+ * controlled so every unit of the found tree is open.
  */
 export function useUnitTreeSearch<TNode extends SearchableNode<TNode>>(
   treeData: TNode[],
@@ -61,10 +63,8 @@ export function useUnitTreeSearch<TNode extends SearchableNode<TNode>>(
       searchValue: text,
       onSearch: setText,
       filterTreeNode: false,
-      // Still names what the tree lights up as a match.
       treeNodeFilterProp: "title",
     },
-    // While searching every unit of the found tree is open; otherwise the select keeps its own expansion.
     treeExpandedKeys: text ? expandedKeys : undefined,
   };
 }
