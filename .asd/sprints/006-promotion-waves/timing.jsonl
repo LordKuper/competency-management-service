@@ -125,3 +125,7 @@
 {"op":"open","id":"suite desk-query-count","kind":"suite","parent":"impl-test-1","start":"2026-10-30T07:38:02.567Z","attrs":{"scope":"DeskQueryCountTests"}}
 {"op":"close","id":"suite desk-query-count","kind":"suite","parent":"impl-test-1","start":"2026-10-30T07:38:02.567Z","end":"2026-10-30T07:38:50.298Z","outcome":"done","attrs":{"scope":"DeskQueryCountTests"}}
 {"op":"close","id":"impl-test-1 r2","kind":"dispatch","parent":"impl-test#1","start":"2026-10-30T07:37:58.817Z","end":"2026-10-30T07:40:17.446Z","outcome":"done","attrs":{}}
+{"op":"close","id":"impl-test#1","kind":"phase","parent":null,"start":"2026-10-30T06:33:02.375Z","end":"2026-10-30T07:40:42.853Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl#2","kind":"phase","parent":null,"start":"2026-10-30T07:40:42.853Z","attrs":{}}
+{"op":"open","id":"D-1","kind":"dispatch","parent":"impl#2","start":"2026-10-30T07:41:12.150Z","attrs":{}}
+{"op":"close","id":"D-1","kind":"dispatch","parent":"impl#2","start":"2026-10-30T07:41:12.150Z","end":"2026-10-30T07:43:40.287Z","outcome":"done","attrs":{}}

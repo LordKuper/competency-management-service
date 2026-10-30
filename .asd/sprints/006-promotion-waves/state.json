@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "impl-test",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -351,6 +351,12 @@
       "tier": "standard",
       "reason": "risk:public contract",
       "resolved_model": "sonnet"
+    },
+    "D-1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "normal",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
@@ -373,9 +379,9 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T07:40:35.532Z",
+  "updated_at": "2026-10-30T07:44:32.631Z",
   "review_fixes_pending": null,
-  "test_defects_pending": true,
+  "test_defects_pending": null,
   "pr": null,
   "archived_at": null
 }
