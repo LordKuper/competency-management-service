@@ -1,7 +1,7 @@
 {
   "sprint_id": "007-rename-competency-to-kalibr",
   "branch": "sprint/007-rename-competency-to-kalibr",
-  "phase": "impl-review",
+  "phase": "design-promote",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -97,6 +97,13 @@
       "reason": "adaptive: wave 1 of 1 roster met (combined APPROVE, external APPROVE, both latched at 1); terminal full suite green, no defects, no open findings",
       "evidence": "reviews/impl/wave-1/iter-01/combined.md, external.md; test-plan.md Suite run HEAD a2f3855b (.NET 952/952, web 850/850, lint and build exit 0); commit ec1fad8f",
       "artifact_revision": "HEAD ec1fad8f"
+    },
+    {
+      "gate": "decomposition",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: no new or changed subsystem boundary; only module and path names change (Competency.* → Kalibr.*) in subsystems.md labels and <id>.md key paths",
+      "evidence": "git diff -- docs/architecture/subsystems.md docs/architecture/*.md; sprint.md AC-10",
+      "artifact_revision": "docs/architecture/subsystems.md"
     }
   ],
   "task_routing": {
@@ -143,7 +150,7 @@
     }
   },
   "created_at": "2026-10-30T15:31:30.399Z",
-  "updated_at": "2026-10-30T18:25:51.873Z",
+  "updated_at": "2026-10-30T18:27:58.784Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
