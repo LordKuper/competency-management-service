@@ -35,11 +35,11 @@ responsibility:
 
 ## Suite run
 
-- Command: `dotnet Competency.Tests.dll -filter "/*/*/PromotionWaveScheduleTests/*"` из `tests/Competency.Tests/bin/Debug/net10.0` после `dotnet build Competency.slnx --tl:off`; `npm --prefix web run lint`
-- Scope: impacted — тесты, использующие `DueStep` (`PromotionWaveScheduleTests`); общая инфраструктура не менялась, предохранитель не сработал
-- Result: pass — 14 прогонов, 0 упало, 0 пропущено, 0 ошибок
-- Lint / build: pass — `dotnet build` 0 предупреждений и 0 ошибок; `biome ci` и `tsc` чисто, exit 0
-- HEAD: e416b0127d02c1c87e6551f3098a46210c335fa5 — измеренное дерево; изменение записи — только комментарий документации, коммит записи правит лишь `.asd/sprints/**`
+- Command: `dotnet test --solution Competency.slnx`, затем `npm --prefix web test` (последовательно, бэкенд отдельно первым); `npm --prefix web run lint`; `dotnet build Competency.slnx --tl:off && npm --prefix web run build`
+- Scope: full — полный неограниченный прогон (терминальный прогон impl-review)
+- Result: pass — бэкенд: итог 952, успешно 952, сбой 0, пропущено 0, exit 0 (5 мин 13 с); web (vitest): 83 файла из 83, 850 тестов из 850, exit 0 (84 с); известный флак `linkScreens.test.tsx` не повторился
+- Lint / build: pass — `npm --prefix web run lint` exit 0 (biome, 363 файла, без правок); `dotnet build` + `npm --prefix web run build` (tsc, vite) exit 0
+- HEAD: 4546dfef6de9eb789a915b7530fe334bdefe1525 — измеренное дерево; коммит записи правит лишь `.asd/sprints/**`
 
 ## Defects
 
