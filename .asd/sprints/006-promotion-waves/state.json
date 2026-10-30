@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "impl-test",
+  "phase": "impl-review",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -181,6 +181,13 @@
       "reason": "approve: implementation accepted with Tasks 1-27 (AC-1..AC-93), advance to impl-test",
       "evidence": "decisions-log.md, plan.md",
       "artifact_revision": "impl at a937768"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "approve AC-94 (mail to the responsible HR, inherited, else global administrators, when a unit's applications are held for want of a chair) and AC-95 (HR and admins change the composition of a commission of a unit in an unfinished wave at any stage; a chair always kept); Task 28 wave 28",
+      "evidence": "sprint.md, plan.md, decisions-log.md; floor_base=wave-1/1",
+      "artifact_revision": "sprint.md AC-94, AC-95"
     }
   ],
   "task_routing": {
@@ -370,17 +377,24 @@
       "wave": 1,
       "waves": [
         {
-          "iteration": 0,
-          "verdicts": {},
-          "iteration_heads": {},
+          "iteration": 1,
+          "verdicts": {
+            "iter-01": {
+              "combined": "CONCERNS",
+              "external": "APPROVE (skipped: external review unavailable: negative cache — quota (Codex model at capacity), retry after 2026-10-30T09:20:21.040Z)"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "bcafd43837da8115f0774feb781371dd4f063cd8"
+          },
           "latched": {}
         }
       ]
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T07:44:47.973Z",
-  "review_fixes_pending": null,
+  "updated_at": "2026-10-30T08:39:44.803Z",
+  "review_fixes_pending": "wave-1/iter-01",
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null
