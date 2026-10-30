@@ -73,3 +73,5 @@
 {"op":"open","id":"cleanup#1","kind":"phase","parent":null,"start":"2026-10-30T18:29:50.075Z","attrs":{}}
 {"op":"close","id":"cleanup#1","kind":"phase","parent":null,"start":"2026-10-30T18:29:50.075Z","end":"2026-10-30T18:30:09.430Z","outcome":"done","attrs":{}}
 {"op":"open","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-30T18:30:09.430Z","attrs":{}}
+{"op":"close","id":"retro#1","kind":"phase","parent":null,"start":"2026-10-30T18:30:09.430Z","end":"2026-10-30T18:34:54.918Z","outcome":"done","attrs":{}}
+{"op":"open","id":"pr#1","kind":"phase","parent":null,"start":"2026-10-30T18:34:54.918Z","attrs":{}}
