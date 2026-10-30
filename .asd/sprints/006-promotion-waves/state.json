@@ -394,6 +394,12 @@
       "tier": "standard",
       "reason": "normal",
       "resolved_model": "sonnet"
+    },
+    "Task 28": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:security",
+      "resolved_model": "sonnet"
     }
   },
   "skipped_phases": [],
