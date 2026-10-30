@@ -14,7 +14,7 @@ responsibility:
   <meta name="subsystem" content="org-structure">
   <meta name="sprint-id" content="">
   <meta name="status" content="approved">
-  <meta name="updated" content="2026-10-27">
+  <meta name="updated" content="2026-10-30">
   <meta name="responsibility" content="product requirements of the org-structure subsystem: unit tree and unit deletion, employees with main and secondary assignments, legal entities, dismissal and deletion cascade, structure reading and search, the positions catalogue and unit position lists, the Org structure section, the org-structure Excel import">
   <meta name="provenance" content="original">
   <meta name="source" content="">
@@ -208,7 +208,7 @@ responsibility:
           <span class="status-approved">approved</span>
         </div>
         <h1>Требования — Оргструктура</h1>
-        <div class="stats">7 goals · 13 stories · 74 AC · 11 non-goals · updated 2026-10-27</div>
+        <div class="stats">7 goals · 13 stories · 75 AC · 11 non-goals · updated 2026-10-30</div>
       </header>
       <main>
 <!--
@@ -285,7 +285,7 @@ provenance: original
       <tr id="AC-7"><td><a href="#AC-7">AC-7</a></td><td>Подразделение, на которое что-то ссылается, не удаляется, а только деактивируется (удаление пустого — <a href="#AC-55">AC-55</a>); неактивное подразделение остаётся видимым администратору и HR (<a href="user-management.html#AC-12">user-management AC-12</a>).</td><td><span class="chip area">подразделения</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-8"><td><a href="#AC-8">AC-8</a></td><td>Руководителем подразделения может быть только работающий сотрудник с любым назначением (основным или совмещением, <a href="#AC-47">AC-47</a>) в этом подразделении; иначе назначение отклоняется (400) с причиной. Правило действует для ручного назначения, его проверок и находок рабочего стола о руководителе. У только что созданного подразделения руководителя нет. Правило проверяется при смене руководителя; ранее сохранённые данные молча не исправляются.</td><td><span class="chip area">руководитель</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-9"><td><a href="#AC-9">AC-9</a></td><td>Руководитель снимается с руководства подразделения в той же операции, когда у него не остаётся ни одного назначения в этом подразделении — при переводе, смене или снятии совмещения, перемещении (<a href="#AC-54">AC-54</a>) и импорте (<a href="#AC-67">AC-67</a>); в ручных операциях пользователь получает предупреждение до сохранения, изменение журналируется.</td><td><span class="chip area">руководитель</span></td><td><span class="chip prio-must">must</span></td></tr>
-      <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Сотрудник имеет фамилию и имя (обязательные, каждое не длиннее 100 символов), отчество (необязательное, не длиннее 100), основное назначение и совмещения (<a href="#AC-47">AC-47</a>) и статус «работает» / «не работает». Табельного номера и собственного e-mail у сотрудника нет.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-10"><td><a href="#AC-10">AC-10</a></td><td>Сотрудник имеет фамилию и имя (обязательные, каждое не длиннее 100 символов), отчество (необязательное, не длиннее 100), основное назначение и совмещения (<a href="#AC-47">AC-47</a>), необязательный уровень образования (AC-75) и статус «работает» / «не работает». Табельного номера и собственного e-mail у сотрудника нет.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-11"><td><a href="#AC-11">AC-11</a></td><td>Отображаемое ФИО («Фамилия Имя Отчество», без отчества — «Фамилия Имя») собирается автоматически из частей и доступно только для чтения.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-12"><td><a href="#AC-12">AC-12</a></td><td>Новый сотрудник работает. Сотрудника можно создать или перевести только в активное подразделение. Правка полей сотрудника статус не меняет: статус меняют только увольнение и возврат на работу.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-13"><td><a href="#AC-13">AC-13</a></td><td>В данных сотрудника отдаётся e-mail его учётной записи (<a href="user-management.html#AC-1">user-management AC-1</a>); у сотрудника без учётной записи e-mail пуст.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
@@ -350,6 +350,7 @@ provenance: original
       <tr id="AC-72"><td><a href="#AC-72">AC-72</a></td><td>На выгрузке из 10 000 строк с сотрудниками распознавание с предпросмотром и применение занимают не больше 30 с каждое.</td><td><span class="chip area">импорт</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-73"><td><a href="#AC-73">AC-73</a></td><td>Импорт распознаёт кандидатов в руководители: сотрудник строки файла — кандидат в руководители подразделения этой строки, если название его должности начинается со слова или сочетания из списка «руководитель», «директор», «генеральный директор», «вице-президент», «президент», «начальник», «заведующий», «управляющий», «глава» (без учёта регистра, «ё» равна «е»); «Заместитель директора» — не кандидат.</td><td><span class="chip area">импорт</span></td><td><span class="chip prio-must">must</span></td></tr>
       <tr id="AC-74"><td><a href="#AC-74">AC-74</a></td><td>Шаг мастера «Руководители» показывает подразделения файла, у которых есть кандидаты или руководитель, с выбором руководителя из работающих после применения сотрудников подразделения или «Без руководителя». По умолчанию: у подразделения без руководителя после применения (новое; без руководителя; руководитель уволен решением или уходит из подразделения) единственный кандидат выбран, при нескольких кандидатах не выбран никто и подразделение помечено «Несколько кандидатов — выберите руководителя»; у подразделения с остающимся руководителем он сохраняется, а если он не среди кандидатов — показано предупреждение с распознанными кандидатами. Применение возможно и без выбора. Выбранные руководители назначаются той же операцией применения и журналируются как ручное назначение.</td><td><span class="chip area">импорт</span></td><td><span class="chip prio-must">must</span></td></tr>
+      <tr id="AC-75"><td><a href="#AC-75">AC-75</a></td><td>Уровень образования хранится в карточке сотрудника. Новая заявка на карьерный переход подставляет его из карточки; если кандидат меняет его в заявке, при отправке заявки карточка обновляется (<a href="promotion.html#AC-10">promotion AC-10</a>). Уровни по порядку: «Среднее общее образование», «Среднее профессиональное образование», «Высшее образование — бакалавриат», «Высшее образование — специалитет, магистратура», «Высшее образование — подготовка кадров высшей квалификации»; сравнение «не ниже» — по этому порядку.</td><td><span class="chip area">сотрудники</span></td><td><span class="chip prio-must">must</span></td></tr>
     </tbody>
   </table>
 </section>
@@ -371,7 +372,7 @@ provenance: original
   </ul>
 </section>
       </main>
-      <footer>by ASD workflow | 2026-10-27</footer>
+      <footer>by ASD workflow | 2026-10-30</footer>
     </div>
   </div>
 </body>

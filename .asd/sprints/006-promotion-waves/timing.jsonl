@@ -237,3 +237,5 @@
 {"op":"close","id":"impl-review green handoff","kind":"user-wait","parent":"impl-review#4","start":"2026-10-30T11:51:58.202Z","end":"2026-10-30T11:56:53.798Z","outcome":"done","attrs":{"gate":"impl-review green handoff"}}
 {"op":"close","id":"impl-review#4","kind":"phase","parent":null,"start":"2026-10-30T11:40:24.139Z","end":"2026-10-30T11:56:53.921Z","outcome":"done","attrs":{}}
 {"op":"open","id":"design-promote#1","kind":"phase","parent":null,"start":"2026-10-30T11:56:53.921Z","attrs":{}}
+{"op":"open","id":"new subsystem promotion","kind":"user-wait","parent":"design-promote#1","start":"2026-10-30T11:58:43.903Z","attrs":{"gate":"new subsystem"}}
+{"op":"close","id":"new subsystem promotion","kind":"user-wait","parent":"design-promote#1","start":"2026-10-30T11:58:43.903Z","end":"2026-10-30T11:59:22.106Z","outcome":"done","attrs":{"gate":"new subsystem"}}

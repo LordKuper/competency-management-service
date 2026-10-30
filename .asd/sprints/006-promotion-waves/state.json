@@ -1,7 +1,7 @@
 {
   "sprint_id": "006-promotion-waves",
   "branch": "sprint/006-promotion-waves",
-  "phase": "impl-review",
+  "phase": "design-promote",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -209,6 +209,13 @@
       "reason": "advance to design-promote without waiting for Codex: external review availability-skipped in all 4 iterations (quota)",
       "evidence": "decisions-log.md; test-plan.md Suite run",
       "artifact_revision": "impl-review at 745d9abd"
+    },
+    {
+      "gate": "new subsystem",
+      "decision_actor": "user",
+      "reason": "approve subsystem id promotion (module Competency.Promotion) named «Карьерные переходы»",
+      "evidence": "decisions-log.md",
+      "artifact_revision": "docs/architecture/subsystems.md"
     }
   ],
   "task_routing": {
@@ -497,7 +504,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T11:56:53.860Z",
+  "updated_at": "2026-10-30T12:22:58.590Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
