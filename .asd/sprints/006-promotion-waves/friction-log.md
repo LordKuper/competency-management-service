@@ -21,6 +21,7 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 | F-1 | impl-test | Тестировщик ослабил тест бюджета SQL-команд стола (25 → 30), вместо того чтобы записать дефект кода | D-1 |
 | F-2 | impl-review | Внешнее ревью недоступно: модель Codex перегружена, итерация засчитана пропуском | reviews/impl/wave-1/iter-01/external |
 | F-3 | impl-review | Кэш доступности внешнего ревью `.asd/project/external-cache.json` не исключён в `.gitignore` | — |
+| F-4 | impl-test | Тестировщик не записал операции прогона набора в журнал времени | test-plan.md Entry log |
 
 ## F-1 — Тестировщик ослабил тест бюджета SQL-команд стола, вместо того чтобы записать дефект кода
 
@@ -45,3 +46,11 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 - **What happened**: после `external-record-failure` файл `.asd/project/external-cache.json` появился в `git status` как неотслеживаемый. Вход в impl-review требует чистого дерева. Оркестратор исключил файл локально через `.git/info/exclude` и не коммитит его.
 - **Impact**: без локального исключения следующий вход в impl-review упал бы на проверке чистого дерева. На другой машине проблема повторится.
 - **Refs**: —
+
+## F-4 — Тестировщик не записал операции прогона набора в журнал времени
+
+- **Phase**: impl-test
+- **Surface**: agent — `asd-tester` (impl-test, запись 3); правило `asd-phase-impl-test.md` `## Rules` «bracket each suite run (steps 3, 8) with a `suite` op»
+- **What happened**: запись 3 прогнала полный backend и веб-набор до и после написания тестов, но в `timing.jsonl` не появилось ни одной операции `suite`. Вердикт пришлось подтверждать повторным прогоном новых тестов оркестратором.
+- **Impact**: время прогонов записи 3 потеряно для ретро, плюс около двух минут на повторный прогон.
+- **Refs**: test-plan.md Entry log, строка 3

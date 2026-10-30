@@ -13,7 +13,7 @@ responsibility:
 |---|---|---|
 | 1 | e16a232e2d9b7d86c6e2672a3a23a2b03c2ce926 | full change surface (Tasks 1–27, AC-1…AC-93; AC-9, AC-27, AC-39 сняты) |
 | 2 | 0a2ae2834d7d84621b92648f16241b4d21ed30cb | delta since entry 1 (`3659c0ae`, фикс D-1: `CommissionReader.ReadAsync`) |
-| 3 |  | delta since entry 2 (`0a2ae283`): review-fix wave-1/iter-01 (F1–F10), Task 28 (AC-94, AC-95), правка веб-поиска подразделений (`useUnitTreeSearch`) |
+| 3 | 47b455e4e6716896e4f6652118fc13b1eaeb98aa | delta since entry 2 (`0a2ae283`): review-fix wave-1/iter-01 (F1–F10), Task 28 (AC-94, AC-95), правка веб-поиска подразделений (`useUnitTreeSearch`) |
 
 ## Risk → check decisions
 
