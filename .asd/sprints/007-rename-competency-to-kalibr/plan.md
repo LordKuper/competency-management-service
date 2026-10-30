@@ -8,7 +8,7 @@ responsibility:
 # Plan
 
 ## Overview
-Сквозное переименование имени продукта Competency → Kalibr (подход A, `research.md`). Две задачи dev в одной волне: Task 1 — решение, проекты, код, тесты, lock-файлы, контракт, образ и web; Task 2 — манифесты Kubernetes, dev-стек и руководства `deploy/`. Правила проекта, `commands.yaml`, память агентов и `docs/**` правит оркестратор в точках, названных ниже. Доменный термин «компетенция» не меняется (`sprint.md` «Out of scope»).
+Сквозное переименование имени продукта Competency → Kalibr (подход A, `research.md`). Волна 1 — две задачи dev: Task 1 — решение, проекты, production-код, компиляция тестов, lock-файлы, контракт, образ и web; Task 2 — манифесты Kubernetes, dev-стек и руководства `deploy/`. Волна 2 — Task 3 (`asd-tester`, Test-only): строковые литералы тестов. Правила проекта, `commands.yaml`, память агентов и `docs/**` правит оркестратор в точках, названных ниже. Доменный термин «компетенция» не меняется (`sprint.md` «Out of scope»).
 
 Значения, которые обе задачи используют одинаково: имя БД и пользователя PostgreSQL `kalibr`, путь ключей DataProtection `/var/lib/kalibr/keys`, образ `kalibr-app`, Secret `kalibr-secret`, проект dev compose `kalibr-dev`, том `kalibr-dev-pgdata`, профиль запуска `Kalibr.Api`.
 
@@ -27,13 +27,13 @@ Material risk: artifact: literal swap across build graph — проверяет�
 - [ ] Перед переносом остановить по PID только процессы, мешающие ему, из списка `custom-common-rules.md` «Blocking project processes» (запущенный `Competency.Api`, Visual Studio с `Competency.slnx`, его сборочные процессы, `testhost`, Vite из `web/`).
 - [ ] Отдельным коммитом, без правок содержимого: `git mv` `Competency.slnx` → `Kalibr.slnx`, `Competency.slnLaunch` → `Kalibr.slnLaunch`, каждой папки `src/Competency.<Module>` → `src/Kalibr.<Module>` (Api, Audit, CareerFramework, Desk, OrgStructure, Platform, Promotion, UserManagement) и её `Competency.<Module>.csproj` → `Kalibr.<Module>.csproj`, `tests/Competency.Tests` → `tests/Kalibr.Tests` и `Competency.Tests.csproj` → `Kalibr.Tests.csproj`.
 - [ ] Удалить неотслеживаемые остатки сборки (`bin/`, `obj/`) в старых папках `src/Competency.*`, `tests/Competency.Tests`, чтобы старых папок не осталось.
-- [ ] Заменить `Competency.<Module>` (9 имён) на `Kalibr.<Module>` во всех `*.cs` (namespace, `using`, `cref`, строковые имена типов EF в `CareerFrameworkEntityConfiguration.cs`, `UserManagementEntityConfiguration.cs`, namespace и `modelBuilder.Entity("…")` в файлах миграций и `AppDbContextModelSnapshot.cs`, `projects.Should().Contain(…)` в `DeploymentTests.cs`), `*.csproj` (`ProjectReference`, `InternalsVisibleTo`), `Kalibr.slnx`, `Kalibr.slnLaunch` (пути и `DebugTarget`), `Properties/launchSettings.json` (имя профиля). ID и имена классов миграций не меняются, новая миграция не создаётся.
-- [ ] Литералы: `PlatformModule.cs` `DataProtectionApplicationName = "kalibr"`; `appsettings.json` cookie `.kalibr.auth`; `launchSettings.json` `Database=kalibr;Username=kalibr`; файл решения `Kalibr.slnx` в `DeploymentTests.cs` и `Infrastructure/ApiContract.cs`; `Kalibr.Api.dll` и временная папка `kalibr-tests-<guid>` в `Infrastructure/ApiHost.cs`; временный файл `kalibr-xxe-<guid>.txt` в `OrgImportParserTests.cs`.
+- [ ] Заменить `Competency.<Module>` (9 имён) на `Kalibr.<Module>` в production-коде и сборке: `src/**/*.cs` (namespace, `using`, `cref`, строковые имена типов EF в `CareerFrameworkEntityConfiguration.cs`, `UserManagementEntityConfiguration.cs`, namespace и `modelBuilder.Entity("…")` в файлах миграций и `AppDbContextModelSnapshot.cs`), все `*.csproj` (`ProjectReference`, `InternalsVisibleTo`), `Kalibr.slnx`, `Kalibr.slnLaunch` (пути и `DebugTarget`), `Properties/launchSettings.json` (имя профиля). В `tests/**/*.cs` — только то, что нужно для компиляции: `namespace`, `using`, `cref` (`custom-coding-rules.md` «Contract surface changes»); строковые литералы тестов — Task 3. ID и имена классов миграций не меняются, новая миграция не создаётся.
+- [ ] Литералы production: `PlatformModule.cs` `DataProtectionApplicationName = "kalibr"`; `appsettings.json` cookie `.kalibr.auth`; `launchSettings.json` `Database=kalibr;Username=kalibr`.
 - [ ] `Dockerfile`: `COPY`, `restore`, `publish` для `src/Kalibr.*`, `DataProtection__KeysPath=/var/lib/kalibr/keys`, `ENTRYPOINT ["dotnet", "Kalibr.Api.dll"]`.
 - [ ] Перегенерировать `packages.lock.json` всех 9 проектов `dotnet restore Kalibr.slnx --force-evaluate` (порядок записей меняется, текстовой замены мало).
 - [ ] `web/package.json` и `web/package-lock.json`: имя `kalibr-web`; корневой `package.json`: добавить `"name": "kalibr"`, корневой `package-lock.json` — то же имя.
 - [ ] `dotnet build Kalibr.slnx --tl:off -c Release` без предупреждений и ошибок перегенерирует `openapi/openapi.json` (`info.title` `Kalibr.Api | v1`); затем `npm --prefix web run gen:api`, `check:api`, `lint`, `build` чисты, `dotnet ef migrations has-pending-model-changes --project src/Kalibr.Platform --startup-project src/Kalibr.Api` чист.
-- [ ] Проверка доменной границы: в удалённых строках `git diff` задачи каждое вхождение `competency` (без учёта регистра) относится к шаблонам имени продукта из «Overview»; в `openapi/openapi.json` изменилась только строка `info.title`.
+- [ ] Проверка доменной границы: в удалённых строках `git diff` задачи, кроме строковых литералов тестов из Task 3, каждое вхождение `competency` (без учёта регистра) относится к шаблонам имени продукта из «Overview»; в `openapi/openapi.json` изменилась только строка `info.title`.
 
 ### Task 2: Переименовать манифесты Kubernetes, dev-стек и руководства deploy
 AC: AC-5 (README), AC-6, AC-7.
@@ -45,13 +45,24 @@ Material risk: artifact: deploy literal swap — проверяется `rg` п�
 - [ ] `deploy/README.md`: `kalibr-app`, `kalibr-images.tar`, namespace `kalibr` во всех командах, `kalibr-secret`/`kalibr-secret.yaml`, пример `https://kalibr.corp.example`; одна строка: после обновления все пользователи один раз выходят из сессии, неиспользованные ссылки сброса пароля и приглашения недействительны; одна строка: установка со старыми именами (`competency`) не переносится, Kalibr ставится заново.
 - [ ] `deploy/dev/README.md`: пути `src/Kalibr.Api`, `Kalibr.slnx`, `Kalibr.slnLaunch`, профиль `Kalibr.Api`, проект `kalibr-dev`, том `kalibr-dev-pgdata`; сказано, что новый стек начинает с пустой БД, контейнеры проекта `competency-dev` нужно остановить до первого запуска (порты 15432, 11025, 18025), а том `competency-dev-pgdata` и эти контейнеры пользователь удаляет сам.
 
+### Task 3: Обновить строковые литералы тестов под новые имена
+AC: AC-1, AC-2, AC-12 (тесты находят `Kalibr.slnx`, запускают `Kalibr.Api.dll`, ждут категорию журнала `Kalibr.Platform.*`).
+Material risk: none
+Test-only: tests/Kalibr.Tests/DeploymentTests.cs, tests/Kalibr.Tests/Infrastructure/ApiContract.cs, tests/Kalibr.Tests/Infrastructure/ApiHost.cs, tests/Kalibr.Tests/PlatformTests.cs, tests/Kalibr.Tests/OrgImportParserTests.cs
+- [ ] `DeploymentTests.cs`: `"Kalibr.CareerFramework"` в ожидании списка проектов, файл решения `Kalibr.slnx` при поиске корня.
+- [ ] `Infrastructure/ApiContract.cs`: `SolutionFile = "Kalibr.slnx"`; `Infrastructure/ApiHost.cs`: `Kalibr.Api.dll`, временная папка `kalibr-tests-<guid>`.
+- [ ] `PlatformTests.cs`: `FailureLogCategory = "Kalibr.Platform.ProblemExceptionHandler"`; `OrgImportParserTests.cs`: временный файл `kalibr-xxe-<guid>.txt`.
+- [ ] `rg` по шаблонам имени продукта в `tests/**/*.cs` пуст.
+
 ## Dependencies
 
 | Wave | Tasks |
 |---|---|
 | 1 | Task 1, Task 2 |
+| 2 | Task 3 |
 
 - Task 1 и Task 2 не пересекаются по путям: Task 2 — только `deploy/**`; общие значения заданы в «Overview».
+- Task 3 зависит от Task 1: файлы тестов перенесены в `tests/Kalibr.Tests` и компилируются с новыми namespace.
 
 Orchestrator: в impl после волны 1, до шлюза build + lint, правит `.asd/project/commands.yaml` (`Kalibr.slnx`, `src/Kalibr.Api`, `src/Kalibr.Platform`), `custom-coding-rules.md` (`Kalibr.slnx`, `Kalibr.Platform`), `custom-common-rules.md` («Blocking project processes»: `Kalibr.Api`, `Kalibr.Api.exe`, `Kalibr.Api.dll`, `Kalibr.slnx`) и добавляет в `custom-common-rules.md` раздел с правилом AC-16 (AC-16, AC-17).
 

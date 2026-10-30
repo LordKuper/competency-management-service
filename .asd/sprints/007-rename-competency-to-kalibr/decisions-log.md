@@ -37,3 +37,9 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 ## Entries
 
 <!-- entries appended below this line -->
+
+## 2026-10-30 — plan amended: test literals to Test-only Task 3
+
+- **Decision**: Строковые литералы тестов с именем продукта (`DeploymentTests.cs`, `ApiContract.cs`, `ApiHost.cs`, `PlatformTests.cs`, `OrgImportParserTests.cs`) вынесены из Task 1 в Test-only Task 3 (`asd-tester`, волна 2); Task 1 меняет в тестах только то, что нужно для компиляции (namespace, `using`, `cref`, csproj). Найден дополнительный литерал `PlatformTests.cs` `FailureLogCategory = "Competency.Platform.ProblemExceptionHandler"`.
+- **Rationale**: impl запрещает dev'у править тесты, кроме Test-only Task (`sprint-lifecycle.md` «Plan file format»); AC и решения пользователя не меняются, поэтому принятие плана повторено адаптивно.
+- **Affected docs**: [plan.md](plan.md)

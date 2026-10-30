@@ -1,7 +1,7 @@
 {
   "sprint_id": "007-rename-competency-to-kalibr",
   "branch": "sprint/007-rename-competency-to-kalibr",
-  "phase": "plan",
+  "phase": "impl",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -76,6 +76,13 @@
       "reason": "adaptive: every Task traces to user-approved AC and scope answers; no settings change, stub or new dependency",
       "evidence": "plan.md; sprint.md AC-1..AC-19",
       "artifact_revision": "plan.md 2026-10-30"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: amendment moves test string literals out of dev Task 1 into Test-only Task 3 (wave 2), impl never-modify-test rule; no AC, settings, stub or dependency change",
+      "evidence": "plan.md Task 3, Dependencies wave 2; sprint-lifecycle.md Plan file format Test-only declaration",
+      "artifact_revision": "plan.md 2026-10-30 amended"
     }
   ],
   "task_routing": {},
@@ -99,7 +106,7 @@
     }
   },
   "created_at": "2026-10-30T15:31:30.399Z",
-  "updated_at": "2026-10-30T16:35:14.281Z",
+  "updated_at": "2026-10-30T16:39:15.447Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
