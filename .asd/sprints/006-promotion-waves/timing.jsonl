@@ -187,3 +187,4 @@
 {"op":"close","id":"review-fix wave-1/iter-02 tester","kind":"dispatch","parent":"impl#4","start":"2026-10-30T10:55:58.411Z","end":"2026-10-30T10:58:16.857Z","outcome":"done","attrs":{}}
 {"op":"close","id":"impl#4","kind":"phase","parent":null,"start":"2026-10-30T10:49:13.222Z","end":"2026-10-30T10:59:11.613Z","outcome":"done","attrs":{}}
 {"op":"open","id":"impl-test#4","kind":"phase","parent":null,"start":"2026-10-30T10:59:11.613Z","attrs":{}}
+{"op":"open","id":"impl-test entry 4","kind":"dispatch","parent":"impl-test#4","start":"2026-10-30T10:59:20.779Z","attrs":{}}

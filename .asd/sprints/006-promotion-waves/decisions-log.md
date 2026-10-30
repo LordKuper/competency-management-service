@@ -189,3 +189,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — review-fix tester chain done (e1e0dc43, e49adf2d): F2 — мёртвый параметр `waveId` убран из `PromotionScene.PutInStageAsync`; F5 — sha `47b455e4` в строке HEAD раздела Suite run
 - 2026-10-30 — impl completion gate passed at e49adf2d: `dotnet build` 0/0, no pending model changes after the migration, web lint, build, check:api clean; diff a1dba540..HEAD only in finding paths (src/Competency.Promotion, migrations, useUnitTreeSearch.ts, PromotionScene.cs, test-plan.md)
 - 2026-10-30 — impl fix for wave-1/iter-02: findings resolved
+- 2026-10-30 — route impl-test entry 4: standard, dispatch HEAD e77cb1f8
