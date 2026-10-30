@@ -29,5 +29,9 @@ Phase-scoped rules go elsewhere — design constraints to `custom-design-rules.m
 
 ## Blocking project processes
 
-- An agent may stop a user-started process of this project that blocks a build, a test run or a file, and only these: Competency.Api (`Competency.Api.exe`, or `dotnet` running this repository's `Competency.Api.dll`); the Visual Studio instance with this repository's `Competency.slnx` open (`devenv.exe`) and its build processes (`MSBuild.exe`, `VBCSCompiler.exe`, `ServiceHub.*`); `testhost.exe` and `dotnet test` of this repository; the frontend dev server (`node` running `vite` from `web/`).
+- An agent may stop a user-started process of this project that blocks a build, a test run or a file, and only these: Kalibr.Api (`Kalibr.Api.exe`, or `dotnet` running this repository's `Kalibr.Api.dll`); the Visual Studio instance with this repository's `Kalibr.slnx` open (`devenv.exe`) and its build processes (`MSBuild.exe`, `VBCSCompiler.exe`, `ServiceHub.*`); `testhost.exe` and `dotnet test` of this repository; the frontend dev server (`node` running `vite` from `web/`).
 - The process is stopped by PID, found by this repository's path or command line, never by whole image name. The browser, Docker and any other process are never stopped. (`005-org-structure-excel-import#AC-25`, replaces rejected `004-role-desktop-user-journeys#A-4`, `#A-7`)
+
+## Multi-role screen mockups
+
+- A sprint adding new screens for more than one role agrees at scope, before the plan, on mockups of each role's screens and an end-to-end walkthrough of the process stage by stage. (`006-promotion-waves#P-1`)

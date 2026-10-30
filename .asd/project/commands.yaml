@@ -2,17 +2,17 @@
 # read by Dev, Tester, and review agents
 # Run from the repository root. Backend lint is the compiler: Directory.Build.props sets TreatWarningsAsErrors.
 
-test: "dotnet test --solution Competency.slnx && npm --prefix web test"
+test: "dotnet test --solution Kalibr.slnx && npm --prefix web test"
 lint: "npm --prefix web run lint"
-build: "dotnet build Competency.slnx --tl:off && npm --prefix web run build"
-run: "dotnet run --project src/Competency.Api"
+build: "dotnet build Kalibr.slnx --tl:off && npm --prefix web run build"
+run: "dotnet run --project src/Kalibr.Api"
 
 custom:
   gen-api: "npm --prefix web run gen:api"
   check-api: "npm --prefix web run check:api"
   ef-restore: "dotnet tool restore"
-  ef-migration-add: "dotnet ef migrations add --project src/Competency.Platform --startup-project src/Competency.Api"
-  ef-pending-changes: "dotnet ef migrations has-pending-model-changes --project src/Competency.Platform --startup-project src/Competency.Api"
+  ef-migration-add: "dotnet ef migrations add --project src/Kalibr.Platform --startup-project src/Kalibr.Api"
+  ef-pending-changes: "dotnet ef migrations has-pending-model-changes --project src/Kalibr.Platform --startup-project src/Kalibr.Api"
   designmd-install: "npm install @google/design.md"
   designmd-lint: "node_modules\\.bin\\design.md.cmd lint docs\\ux\\DESIGN.md"
   designmd-diff: "node_modules\\.bin\\design.md.cmd diff"
