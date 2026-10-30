@@ -4,7 +4,7 @@ metadata:
   name: db
   labels:
     app.kubernetes.io/name: db
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 spec:
   selector:
     app.kubernetes.io/name: db
@@ -19,7 +19,7 @@ metadata:
   name: db
   labels:
     app.kubernetes.io/name: db
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 spec:
   serviceName: db
   replicas: 1
@@ -30,7 +30,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: db
-        app.kubernetes.io/part-of: competency
+        app.kubernetes.io/part-of: kalibr
     spec:
       automountServiceAccountToken: false
       # The image stops on SIGINT (fast shutdown); a runtime that sends SIGTERM instead makes PostgreSQL
@@ -59,7 +59,7 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: competency-secret
+                  name: kalibr-secret
                   key: POSTGRES_PASSWORD
           securityContext:
             allowPrivilegeEscalation: false

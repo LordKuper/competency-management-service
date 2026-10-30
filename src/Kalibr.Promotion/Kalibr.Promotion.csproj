@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Kalibr.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kalibr.Platform\Kalibr.Platform.csproj" />
+    <ProjectReference Include="..\Kalibr.OrgStructure\Kalibr.OrgStructure.csproj" />
+    <ProjectReference Include="..\Kalibr.UserManagement\Kalibr.UserManagement.csproj" />
+    <ProjectReference Include="..\Kalibr.CareerFramework\Kalibr.CareerFramework.csproj" />
+  </ItemGroup>
+
+</Project>

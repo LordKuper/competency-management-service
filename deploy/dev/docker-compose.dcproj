@@ -5,7 +5,7 @@
     <ProjectGuid>384f94d6-e22d-4798-8204-04e1ad7bc142</ProjectGuid>
     <DockerLaunchAction>None</DockerLaunchAction>
     <DockerServiceName>db</DockerServiceName>
-    <DockerComposeProjectName>competency-dev</DockerComposeProjectName>
+    <DockerComposeProjectName>kalibr-dev</DockerComposeProjectName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="docker-compose.yml" />

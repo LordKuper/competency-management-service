@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.1" />
+    <PackageReference Include="NSubstitute" Version="6.2.0" />
+    <PackageReference Include="AwesomeAssertions" Version="9.6.0" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.15.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kalibr.Api\Kalibr.Api.csproj" />
+    <ProjectReference Include="..\..\src\Kalibr.Platform\Kalibr.Platform.csproj" />
+    <ProjectReference Include="..\..\src\Kalibr.Audit\Kalibr.Audit.csproj" />
+    <ProjectReference Include="..\..\src\Kalibr.OrgStructure\Kalibr.OrgStructure.csproj" />
+    <ProjectReference Include="..\..\src\Kalibr.UserManagement\Kalibr.UserManagement.csproj" />
+    <ProjectReference Include="..\..\src\Kalibr.CareerFramework\Kalibr.CareerFramework.csproj" />
+    <ProjectReference Include="..\..\src\Kalibr.Promotion\Kalibr.Promotion.csproj" />
+  </ItemGroup>
+
+</Project>

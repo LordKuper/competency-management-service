@@ -14,7 +14,7 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 ## Verification depth in impl
 
 - There is no separate full manual verification cycle before impl-test. Verification is done by impl-test with automated tests in the repository: API integration tests on real PostgreSQL through the existing test host, web tests on vitest with a mocked API.
-- Impl (initial mode, every wave and every change request at the impl assessment gate) and impl fix modes (review-fix, test-fix) use minimal checks only: `dotnet build Competency.slnx --tl:off -c Release` with 0 warnings and 0 errors, `dotnet ef migrations has-pending-model-changes` clean, `npm --prefix web run lint`, `build` and `check:api` clean. No scratch database, no real-backend API or UI smoke, no screenshots. The dev report states what was not verified.
+- Impl (initial mode, every wave and every change request at the impl assessment gate) and impl fix modes (review-fix, test-fix) use minimal checks only: `dotnet build Kalibr.slnx --tl:off -c Release` with 0 warnings and 0 errors, `dotnet ef migrations has-pending-model-changes` clean, `npm --prefix web run lint`, `build` and `check:api` clean. No scratch database, no real-backend API or UI smoke, no screenshots. The dev report states what was not verified.
 - Performance is measured only for a Task with a declared perf risk, on a reusable seed script for 10 000+ employees. The first Task with a declared perf risk creates the script; later Tasks reuse it.
 - Playwright and e2e are not used (user decision).
 
@@ -24,7 +24,7 @@ Put here: forbidden libraries/APIs, perf budgets (latency, memory, throughput, r
 
 ## Shared helper types
 
-- Helper types shared across modules (paged list response, ProblemDetails rejections, LIKE escaping, page limits) live in `Competency.Platform`; never copy them per module.
+- Helper types shared across modules (paged list response, ProblemDetails rejections, LIKE escaping, page limits) live in `Kalibr.Platform`; never copy them per module.
 
 ## UI check against DESIGN.md before commit
 

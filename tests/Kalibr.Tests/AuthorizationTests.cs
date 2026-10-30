@@ -1,0 +1,275 @@
+using System.Net;
+using AwesomeAssertions;
+using Kalibr.Tests.Infrastructure;
+using Xunit;
+
+namespace Kalibr.Tests;
+
+/// <summary>
+/// Every protected endpoint answers 401 without a session and 403 to a signed-in user without the administrator role,
+/// whichever resource the request names, and the user role reads only the restricted projection of active data.
+/// </summary>
+public sealed class AuthorizationTests(TestEnvironment environment)
+{
+    private const string ProblemJson = "application/problem+json";
+
+    private static readonly Guid UnknownId = Guid.Parse("00000000-0000-0000-0000-00000000dead");
+
+    private static readonly (string Method, string Path)[] AdministratorEndpoints =
+    [
+        ("GET", "/api/v1/users"),
+        ("GET", "/api/v1/users/{id}"),
+        ("POST", "/api/v1/users"),
+        ("PUT", "/api/v1/users/{id}"),
+        ("POST", "/api/v1/users/{id}/block"),
+        ("POST", "/api/v1/users/{id}/unblock"),
+        ("POST", "/api/v1/users/{id}/resend-invitation"),
+        ("POST", "/api/v1/users/{id}/send-password-reset"),
+        ("GET", "/api/v1/audit"),
+        ("POST", "/api/v1/org-units"),
+        ("PUT", "/api/v1/org-units/{id}"),
+        ("POST", "/api/v1/org-units/{id}/move"),
+        ("POST", "/api/v1/org-units/{id}/deactivate"),
+        ("POST", "/api/v1/org-units/{id}/activate"),
+        ("POST", "/api/v1/employees"),
+        ("PUT", "/api/v1/employees/{id}"),
+        ("GET", "/api/v1/employees/{id}/impact"),
+        ("POST", "/api/v1/employees/{id}/dismiss"),
+        ("POST", "/api/v1/employees/{id}/rehire"),
+        ("DELETE", "/api/v1/employees/{id}"),
+        ("POST", "/api/v1/employees/{id}/move"),
+        ("DELETE", "/api/v1/org-units/{id}"),
+        ("POST", "/api/v1/legal-entities/quick-add"),
+        ("POST", "/api/v1/org-import/preview"),
+        ("POST", "/api/v1/org-import/apply"),
+        ("POST", "/api/v1/positions"),
+        ("PUT", "/api/v1/positions/{id}"),
+        ("POST", "/api/v1/positions/{id}/deactivate"),
+        ("POST", "/api/v1/positions/{id}/activate"),
+        ("GET", "/api/v1/positions/{id}/impact"),
+        ("POST", "/api/v1/org-units/{id}/positions"),
+        ("DELETE", "/api/v1/org-units/{id}/positions/{id}"),
+        ("GET", "/api/v1/org-units/{id}/positions/{id}/impact"),
+        ("POST", "/api/v1/org-units/{id}/positions/quick-add"),
+        ("PUT", "/api/v1/career/org-units/{id}/hr"),
+        ("DELETE", "/api/v1/career/org-units/{id}/hr"),
+        ("GET", "/api/v1/career/org-units/{id}/setup"),
+        ("GET", "/api/v1/promotion/settings"),
+        ("PUT", "/api/v1/promotion/settings"),
+        ("GET", "/api/v1/promotion/settings/rater-exclusions"),
+        ("PUT", "/api/v1/promotion/settings/rater-exclusions/employees/{id}"),
+        ("DELETE", "/api/v1/promotion/settings/rater-exclusions/employees/{id}"),
+        ("PUT", "/api/v1/promotion/settings/rater-exclusions/positions/{id}"),
+        ("DELETE", "/api/v1/promotion/settings/rater-exclusions/positions/{id}"),
+        ("GET", "/api/v1/promotion/commissions"),
+        ("GET", "/api/v1/promotion/waves"),
+        ("POST", "/api/v1/promotion/waves"),
+        ("GET", "/api/v1/promotion/waves/{id}"),
+        ("PUT", "/api/v1/promotion/waves/{id}"),
+        ("GET", "/api/v1/promotion/waves/{id}/rollback"),
+        ("POST", "/api/v1/promotion/waves/{id}/rollback"),
+    ];
+
+    private static readonly (string Method, string Path)[] AnonymousEndpoints =
+    [
+        ("POST", "/api/v1/auth/login"),
+        ("GET", "/api/v1/auth/password-policy"),
+        ("POST", "/api/v1/auth/forgot-password"),
+        ("POST", "/api/v1/auth/accept-invitation"),
+        ("POST", "/api/v1/auth/reset-password"),
+    ];
+
+    private static readonly (string Method, string Path)[] SignedInEndpoints =
+    [
+        ("GET", "/api/v1/org-units"),
+        ("GET", "/api/v1/org-units/tree"),
+        ("GET", "/api/v1/org-units/{id}"),
+        ("GET", "/api/v1/org-units/{id}/subtree"),
+        ("GET", "/api/v1/org-units/{id}/path"),
+        ("GET", "/api/v1/org-units/{id}/summary"),
+        ("GET", "/api/v1/employees"),
+        ("GET", "/api/v1/employees/{id}"),
+        ("GET", "/api/v1/legal-entities"),
+        ("GET", "/api/v1/auth/me"),
+        ("POST", "/api/v1/auth/logout"),
+        ("POST", "/api/v1/auth/change-password"),
+        ("GET", "/api/v1/positions"),
+        ("GET", "/api/v1/positions/{id}"),
+        ("GET", "/api/v1/org-units/{id}/positions"),
+        ("GET", "/api/v1/career/org-units/{id}/hr"),
+        ("GET", "/api/v1/career/me"),
+        ("GET", "/api/v1/career/drafts"),
+        ("GET", "/api/v1/career/approvals"),
+        ("GET", "/api/v1/career/competencies/{id}/versions"),
+        ("GET", "/api/v1/career/matrices"),
+        ("GET", "/api/v1/career/matrices/{id}"),
+        ("POST", "/api/v1/career/matrices"),
+        ("DELETE", "/api/v1/career/matrices/{id}"),
+        ("GET", "/api/v1/career/matrices/{id}/versions"),
+        ("POST", "/api/v1/career/matrices/{id}/versions"),
+        ("GET", "/api/v1/career/matrix-versions/{id}"),
+        ("PUT", "/api/v1/career/matrix-versions/{id}/content"),
+        ("POST", "/api/v1/career/matrix-versions/{id}/submit"),
+        ("POST", "/api/v1/career/matrix-versions/{id}/approve"),
+        ("POST", "/api/v1/career/matrix-versions/{id}/return"),
+        ("POST", "/api/v1/career/matrix-versions/{id}/accept-changes"),
+        ("POST", "/api/v1/career/matrix-versions/{id}/accept-and-revise"),
+        ("POST", "/api/v1/career/matrix-versions/{id}/rollback-changes"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/history"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/variants/1"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/variants/1/diff"),
+        ("PUT", "/api/v1/career/tracks/{id}/level-order"),
+        ("POST", "/api/v1/career/scales/{id}/make-default"),
+        ("GET", "/api/v1/career/me/place"),
+        ("GET", "/api/v1/career/unused-entries"),
+        ("GET", "/api/v1/career/org-units/{id}/matrix-positions"),
+        ("GET", "/api/v1/career/tracks/{id}/positions"),
+        ("GET", "/api/v1/career/tracks/{id}/available-positions"),
+        ("POST", "/api/v1/career/levels/{id}/positions"),
+        ("DELETE", "/api/v1/career/levels/{id}/positions/{id}"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/completeness"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/changes"),
+        ("GET", "/api/v1/career/matrix-versions/{id}/publication"),
+        ("GET", "/api/v1/desk"),
+        ("GET", "/api/v1/desk/items"),
+        ("GET", "/api/v1/desk/count"),
+        ("GET", "/api/v1/promotion/rater-exclusions"),
+        ("GET", "/api/v1/promotion/commissions/{id}"),
+        ("PUT", "/api/v1/promotion/commissions/{id}"),
+        ("GET", "/api/v1/promotion/waves/open"),
+        ("GET", "/api/v1/promotion/waves/{id}/applications"),
+        ("GET", "/api/v1/promotion/waves/{id}/session"),
+        ("GET", "/api/v1/promotion/waves/{id}/head/candidates"),
+        ("GET", "/api/v1/promotion/waves/{id}/targets/{id}/{id}"),
+        ("GET", "/api/v1/promotion/waves/{id}/units/{id}/ranking"),
+        ("POST", "/api/v1/promotion/applications"),
+        ("GET", "/api/v1/promotion/applications/mine"),
+        ("GET", "/api/v1/promotion/applications/{id}"),
+        ("PUT", "/api/v1/promotion/applications/{id}"),
+        ("DELETE", "/api/v1/promotion/applications/{id}"),
+        ("POST", "/api/v1/promotion/applications/{id}/submit"),
+        ("POST", "/api/v1/promotion/applications/{id}/withdraw"),
+        ("PUT", "/api/v1/promotion/applications/{id}/formal"),
+        ("PUT", "/api/v1/promotion/applications/{id}/raters"),
+        ("PUT", "/api/v1/promotion/applications/{id}/raters/{id}/email"),
+        ("PUT", "/api/v1/promotion/applications/{id}/artifacts"),
+        ("POST", "/api/v1/promotion/applications/{id}/send-to-review"),
+        ("POST", "/api/v1/promotion/applications/{id}/feedback"),
+        ("GET", "/api/v1/promotion/ratings/mine"),
+        ("GET", "/api/v1/promotion/applications/{id}/rating"),
+        ("PUT", "/api/v1/promotion/applications/{id}/rating"),
+        ("GET", "/api/v1/promotion/applications/{id}/review"),
+        ("PUT", "/api/v1/promotion/applications/{id}/review"),
+        .. new[] { "directions", "tracks", "competencies", "scales", "blocks" }.Select(kind => ("GET", $"/api/v1/career/{kind}/{{id}}/publication")),
+        .. new[] { "directions", "tracks", "levels", "competencies", "scales", "blocks" }.Select(kind => ("GET", $"/api/v1/career/{kind}/{{id}}/matrices")),
+        .. new[] { "directions", "tracks", "levels", "scales", "competencies", "blocks" }.SelectMany(kind => new (string, string)[]
+        {
+            ("GET", $"/api/v1/career/{kind}"),
+            ("POST", $"/api/v1/career/{kind}"),
+            ("GET", $"/api/v1/career/{kind}/{{id}}"),
+            ("PUT", $"/api/v1/career/{kind}/{{id}}"),
+            ("DELETE", $"/api/v1/career/{kind}/{{id}}"),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/approve"),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/deactivate"),
+            ("POST", $"/api/v1/career/{kind}/{{id}}/activate"),
+        }),
+    ];
+
+    [Fact]
+    public async Task Ac6_AdministratorEndpoints_RefuseAnonymousWith401AndUserWith403_EvenForAnUnknownId()
+    {
+        var host = await environment.SharedHostAsync();
+        var user = await (await (await host.AdminAsync()).CreateUserAsync()).SignInAsync(host);
+        var anonymous = host.Anonymous();
+
+        var wrong = new List<string>();
+        foreach (var (method, template) in AdministratorEndpoints)
+        {
+            var path = template.Replace("{id}", UnknownId.ToString());
+            var asAnonymous = await anonymous.SendAsync(new HttpMethod(method), path);
+            var asUser = await user.SendAsync(new HttpMethod(method), path);
+            if (asAnonymous.Status != HttpStatusCode.Unauthorized || asUser.Status != HttpStatusCode.Forbidden
+                || asAnonymous.ContentType != ProblemJson || asUser.ContentType != ProblemJson)
+            {
+                wrong.Add($"{method} {template}: anonymous {asAnonymous.Code} {asAnonymous.ContentType}, user {asUser.Code} {asUser.ContentType}");
+            }
+        }
+
+        wrong.Should().BeEmpty("every administrator endpoint must answer 401 (anonymous) and 403 (user) as problem+json");
+    }
+
+    [Fact]
+    public void Ac6_EveryOperationOfTheContract_IsCheckedHereOrNamedAsOpenToAnonymous_AndNoCheckedRowIsOfARouteThatIsGone()
+    {
+        var contract = ApiContract.Operations().Select(operation => (operation.Method, operation.Path)).ToHashSet();
+        var listed = AdministratorEndpoints.Concat(SignedInEndpoints).Concat(AnonymousEndpoints)
+            .Select(row => (row.Method, Path: ApiContract.Normalize(row.Path)))
+            .ToHashSet();
+
+        contract.Except(listed).Should().BeEmpty("a route the API gained must be listed above, so that its session and role checks are tested");
+        listed.Except(contract).Should().BeEmpty("a listed route the API no longer has is a stale row");
+    }
+
+    [Fact]
+    public async Task Ac6_SignedInEndpoints_RefuseAnonymousWith401()
+    {
+        var host = await environment.SharedHostAsync();
+        var anonymous = host.Anonymous();
+
+        var wrong = new List<string>();
+        foreach (var (method, template) in SignedInEndpoints)
+        {
+            var response = await anonymous.SendAsync(new HttpMethod(method), template.Replace("{id}", UnknownId.ToString()));
+            if (response.Status != HttpStatusCode.Unauthorized)
+            {
+                wrong.Add($"{method} {template}: {response.Code}");
+            }
+        }
+
+        wrong.Should().BeEmpty("every non-public endpoint must answer 401 without a session");
+    }
+
+    [Fact]
+    public async Task Ac12_UserRole_SeesOnlyActiveUnitsAndWorkingEmployees_WithoutStatusOrVersion()
+    {
+        var host = await environment.SharedHostAsync();
+        var admin = await host.AdminAsync();
+        var active = await admin.CreateUnitAsync();
+        var inactive = await admin.CreateUnitAsync();
+        (await admin.PostAsync($"/api/v1/org-units/{inactive.Id}/deactivate", ifMatch: inactive.ETag)).Expect(HttpStatusCode.OK);
+        var working = await admin.CreateEmployeeAsync(active.Id);
+        var dismissed = await admin.CreateEmployeeAsync(active.Id);
+        (await admin.PostAsync($"/api/v1/employees/{dismissed.Id}/dismiss", ifMatch: dismissed.ETag)).Expect(HttpStatusCode.OK);
+        var account = await admin.CreateUserAsync(employeeId: working.Id);
+        var user = await (await admin.CreateUserAsync()).SignInAsync(host);
+
+        (await admin.GetUnitAsync(inactive.Id)).Status.Should().Be(HttpStatusCode.OK);
+        foreach (var hidden in new[] { "", "/subtree", "/path", "/summary" })
+        {
+            (await user.GetAsync($"/api/v1/org-units/{inactive.Id}{hidden}")).Status.Should().Be(HttpStatusCode.NotFound, hidden);
+        }
+
+        var foundActive = await user.GetAsync($"/api/v1/org-units?q={Uri.EscapeDataString(active.Json!["name"]!.GetValue<string>())}");
+        var foundInactive = await user.GetAsync($"/api/v1/org-units?q={Uri.EscapeDataString(inactive.Json!["name"]!.GetValue<string>())}");
+        var tree = (await user.GetAsync("/api/v1/org-units/tree")).Expect(HttpStatusCode.OK);
+        Ids(foundActive.Expect(HttpStatusCode.OK).Json!["items"]!).Should().Equal(active.Id);
+        Ids(foundInactive.Expect(HttpStatusCode.OK).Json!["items"]!).Should().BeEmpty();
+        Ids(tree.Json!).Should().Contain(active.Id).And.NotContain(inactive.Id);
+
+        (await user.GetAsync($"/api/v1/employees/{dismissed.Id}")).Status.Should().Be(HttpStatusCode.NotFound);
+        var seenByUser = (await user.GetAsync($"/api/v1/employees/{working.Id}")).Expect(HttpStatusCode.OK);
+        var seenByAdmin = (await admin.GetAsync($"/api/v1/employees/{working.Id}")).Expect(HttpStatusCode.OK);
+        seenByUser.Json!["email"]!.GetValue<string>().Should().Be(account.Email);
+        seenByUser.Json.AsObject().ContainsKey("isActive").Should().BeFalse();
+        seenByUser.Json.AsObject().ContainsKey("version").Should().BeFalse();
+        seenByUser.ETag.Should().BeNull();
+        seenByAdmin.Json!["isActive"]!.GetValue<bool>().Should().BeTrue();
+        seenByAdmin.ETag.Should().NotBeNull();
+
+        var list = (await user.GetAsync($"/api/v1/employees?orgUnitId={active.Id}&isActive=false")).Expect(HttpStatusCode.OK);
+        list.Json!["total"]!.GetValue<int>().Should().Be(0, "a user never sees dismissed employees, whatever the filter says");
+    }
+
+    private static IEnumerable<Guid> Ids(System.Text.Json.Nodes.JsonNode rows) =>
+        rows.AsArray().Select(row => Guid.Parse(row!["id"]!.GetValue<string>()));
+}

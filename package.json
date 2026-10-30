@@ -1,4 +1,5 @@
 {
+  "name": "kalibr",
   "dependencies": {
     "@google/design.md": "^0.4.0"
   }

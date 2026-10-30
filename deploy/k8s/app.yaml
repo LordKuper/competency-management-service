@@ -4,7 +4,7 @@ metadata:
   name: app
   labels:
     app.kubernetes.io/name: app
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 spec:
   selector:
     app.kubernetes.io/name: app
@@ -19,7 +19,7 @@ metadata:
   name: app-keys
   labels:
     app.kubernetes.io/name: app
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 spec:
   accessModes: [ReadWriteOnce]
   resources:
@@ -32,7 +32,7 @@ metadata:
   name: app
   labels:
     app.kubernetes.io/name: app
-    app.kubernetes.io/part-of: competency
+    app.kubernetes.io/part-of: kalibr
 spec:
   replicas: 1
   # One pod at a time: the key volume is ReadWriteOnce and the app applies schema migrations at start.
@@ -45,7 +45,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: app
-        app.kubernetes.io/part-of: competency
+        app.kubernetes.io/part-of: kalibr
     spec:
       automountServiceAccountToken: false
       securityContext:
@@ -59,7 +59,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: app
-          image: competency-app:<VERSION>@sha256:<DIGEST>
+          image: kalibr-app:<VERSION>@sha256:<DIGEST>
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -71,32 +71,32 @@ spec:
             - name: ConnectionStrings__Default
               valueFrom:
                 secretKeyRef:
-                  name: competency-secret
+                  name: kalibr-secret
                   key: ConnectionStrings__Default
             # Read only while no active administrator exists; optional so the keys can be dropped from the Secret later.
             - name: Bootstrap__AdminEmail
               valueFrom:
                 secretKeyRef:
-                  name: competency-secret
+                  name: kalibr-secret
                   key: Bootstrap__AdminEmail
                   optional: true
             - name: Bootstrap__AdminPassword
               valueFrom:
                 secretKeyRef:
-                  name: competency-secret
+                  name: kalibr-secret
                   key: Bootstrap__AdminPassword
                   optional: true
             # Only for a relay that requires authentication; set both keys or neither.
             - name: Smtp__UserName
               valueFrom:
                 secretKeyRef:
-                  name: competency-secret
+                  name: kalibr-secret
                   key: Smtp__UserName
                   optional: true
             - name: Smtp__Password
               valueFrom:
                 secretKeyRef:
-                  name: competency-secret
+                  name: kalibr-secret
                   key: Smtp__Password
                   optional: true
           securityContext:
@@ -124,7 +124,7 @@ spec:
             timeoutSeconds: 3
           volumeMounts:
             - name: keys
-              mountPath: /var/lib/competency/keys
+              mountPath: /var/lib/kalibr/keys
       volumes:
         - name: keys
           persistentVolumeClaim:

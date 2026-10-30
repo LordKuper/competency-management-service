@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kalibr.Api/Kalibr.Api.csproj" />
+    <Project Path="src/Kalibr.Audit/Kalibr.Audit.csproj" />
+    <Project Path="src/Kalibr.CareerFramework/Kalibr.CareerFramework.csproj" />
+    <Project Path="src/Kalibr.Desk/Kalibr.Desk.csproj" />
+    <Project Path="src/Kalibr.OrgStructure/Kalibr.OrgStructure.csproj" />
+    <Project Path="src/Kalibr.Platform/Kalibr.Platform.csproj" />
+    <Project Path="src/Kalibr.Promotion/Kalibr.Promotion.csproj" />
+    <Project Path="src/Kalibr.UserManagement/Kalibr.UserManagement.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Kalibr.Tests/Kalibr.Tests.csproj" />
+  </Folder>
+  <Folder Name="/dev/">
+    <Project Path="deploy/dev/docker-compose.dcproj">
+      <Build />
+    </Project>
+    <Project Path="web/web.esproj">
+      <Build />
+      <Deploy />
+    </Project>
+  </Folder>
+</Solution>

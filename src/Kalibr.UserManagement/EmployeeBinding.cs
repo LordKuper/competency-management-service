@@ -1,0 +1,74 @@
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Microsoft.EntityFrameworkCore;
+
+namespace Kalibr.UserManagement;
+
+/// <summary>
+/// The rules that tie an account to an employee: an account of any roles may have one working employee or none,
+/// and an employee has at most one account.
+/// </summary>
+internal static class EmployeeBinding
+{
+    public const string AlreadyBound = "Сотрудник уже привязан к другой учётной записи.";
+
+    /// <summary>
+    /// Checks the roles in a request, which needs no lookup.
+    /// </summary>
+    /// <param name="errors">Collects the problems by field name.</param>
+    /// <param name="roles">The requested roles; null when the request sent none.</param>
+    public static void CheckRoles(Dictionary<string, string[]> errors, IReadOnlyList<UserRole>? roles)
+    {
+        if (roles is null || !roles.All(role => Enum.IsDefined(role)))
+        {
+            errors["roles"] = ["Роли: укажите допустимые значения."];
+        }
+    }
+
+    /// <summary>
+    /// Says why an account cannot be bound to an employee: they do not exist or do not work in the organization.
+    /// </summary>
+    /// <param name="employees">The employee directory.</param>
+    /// <param name="employeeId">The employee to bind.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The reason, or <see langword="null"/> when the employee exists and works.</returns>
+    public static async Task<string?> ProblemAsync(this IEmployeeDirectory employees, Guid employeeId, CancellationToken cancellationToken) =>
+        await employees.FindAsync(employeeId, cancellationToken) switch
+        {
+            null => "Сотрудник не найден.",
+            { IsActive: false } => "Сотрудник не работает.",
+            _ => null,
+        };
+
+    /// <summary>
+    /// Whether the account may get a password reset link: it has registered, is not blocked, and its employee, if any, works.
+    /// </summary>
+    /// <param name="employees">The employee directory.</param>
+    /// <param name="user">The account.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns><see langword="true"/> when the account is active and registered.</returns>
+    public static async Task<bool> MayResetPasswordAsync(this IEmployeeDirectory employees, AppUser user, CancellationToken cancellationToken) =>
+        !user.IsInvited && !user.IsBlocked
+        && (user.EmployeeId is not { } employeeId || await employees.FindAsync(employeeId, cancellationToken) is { IsActive: true });
+
+    /// <summary>
+    /// Whether an account other than the given one is already bound to the employee.
+    /// </summary>
+    /// <param name="context">The context to query through.</param>
+    /// <param name="employeeId">The employee to bind.</param>
+    /// <param name="userId">The account being bound, or <see cref="Guid.Empty"/> for one that does not exist yet.</param>
+    /// <param name="cancellationToken">Cancels the query.</param>
+    /// <returns><see langword="true"/> when the employee already has another account.</returns>
+    public static Task<bool> IsBoundElsewhereAsync(this AppDbContext context, Guid employeeId, Guid userId, CancellationToken cancellationToken) =>
+        context.Set<AppUser>().AnyAsync(user => user.EmployeeId == employeeId && user.Id != userId, cancellationToken);
+
+    /// <summary>
+    /// Finds the full name of an account's employee for display.
+    /// </summary>
+    /// <param name="employees">The employee directory.</param>
+    /// <param name="employeeId">The account's employee, if bound.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    /// <returns>The full name, or <see langword="null"/> when the account has no employee.</returns>
+    public static async Task<string?> NameAsync(this IEmployeeDirectory employees, Guid? employeeId, CancellationToken cancellationToken) =>
+        employeeId is { } id ? (await employees.FindAsync(id, cancellationToken))?.FullName : null;
+}

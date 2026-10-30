@@ -37,7 +37,7 @@ responsibility:
 ## Project conventions
 - Только локальная разработка в Visual Studio: исключение из «минимум зависимостей» и из списка лицензий принято пользователем 2026-10-06 (`stack.html`, «Ограничения»); CI, Docker-образ и тесты проект не используют.
 - `npm install` из MSBuild отключён: зависимости ставятся вручную (`npm ci` в `web/`), чтобы установка не расходилась с `package-lock.json`.
-- Проект входит в `Competency.slnx` (`<Build />`, `<Deploy />`), но `dotnet build Competency.slnx` и `dotnet test` его не ломают: `npm install` и `npm run build` не запускаются (проверено в Task 11, `deploy/dev/README.md`).
+- Проект входит в `Kalibr.slnx` (`<Build />`, `<Deploy />`), но `dotnet build Kalibr.slnx` и `dotnet test` его не ломают: `npm install` и `npm run build` не запускаются (проверено в Task 11, `deploy/dev/README.md`).
 
 ## Known issues and workarounds
 - Не проверялось: поведение `.esproj` вне Visual Studio и при `dotnet build` на машине без компонентов JavaScript Visual Studio (в CI и в образе проект не участвует).

@@ -1,0 +1,447 @@
+using Kalibr.OrgStructure;
+using Kalibr.Platform;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+
+namespace Kalibr.UserManagement;
+
+/// <summary>
+/// The account API. Permission matrix: every operation needs a global administrator, so a signed-in user without the role is refused
+/// with 403 whichever account the request names, and an unknown account answers 404 only to an administrator.
+/// Changes carry <c>If-Match</c>. Creating, changing, blocking and unblocking an account run under the employee tree lock, taken first,
+/// so that no account is ever bound to or unblocked with an employee who is being dismissed; those that could remove an administrator
+/// also lock the active administrators, after it.
+/// A new account is invited: it has no password and is e-mailed a link to set one. Administrators never set passwords: they send a registered account
+/// a password reset link instead, which leaves its password as it is. A repeated invitation and a reset link lock only the account row.
+/// Links are e-mailed after the change is committed and its locks released, and the response tells whether the mail server accepted them.
+/// Accounts are never deleted: blocking ends them. Blocking and a change of roles or employee end the account's sessions.
+/// The HR role stays while the account's employee is the responsible HR of any unit, checked under the same tree lock that assigning an HR takes.
+/// </summary>
+internal static class UserEndpoints
+{
+    private const string Route = "/api/v1/users";
+    private const string Tag = "Users";
+    private const string ResendNeedsInvitedAccount =
+        "Приглашение можно отправить повторно только учётной записи, которая ещё не задала пароль и не заблокирована.";
+    private const string ResetNeedsActiveAccount =
+        "Ссылку для сброса пароля можно отправить только учётной записи, которая уже задала пароль, не заблокирована и привязана к работающему сотруднику или ни к кому.";
+    private const string UnblockNeedsWorkingEmployee =
+        "Нельзя разблокировать учётную запись, пока привязанный сотрудник не работает. Сначала верните сотрудника на работу или отвяжите от него учётную запись.";
+
+    /// <summary>
+    /// How many units the refusal to remove the HR role names before it only counts the rest.
+    /// </summary>
+    private const int HrUnitsNamed = 5;
+
+    public static void Map(IEndpointRouteBuilder endpoints)
+    {
+        var administrators = endpoints.MapGroup(Route)
+            .WithTags(Tag)
+            .RequireAuthorization(AuthorizationPolicies.GlobalAdmin)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden);
+
+        administrators.MapGet(string.Empty, ListAsync).WithName("ListUsers");
+        administrators.MapGet("/{id:guid}", GetAsync).WithName("GetUser").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound);
+        administrators.MapPost(string.Empty, CreateAsync).WithName("CreateUser").ProducesETag()
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPut("/{id:guid}", UpdateAsync).WithName("UpdateUser").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPost("/{id:guid}/block", BlockAsync).WithName("BlockUser").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPost("/{id:guid}/unblock", UnblockAsync).WithName("UnblockUser").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPost("/{id:guid}/resend-invitation", ResendInvitationAsync).WithName("ResendUserInvitation").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+        administrators.MapPost("/{id:guid}/send-password-reset", SendPasswordResetAsync).WithName("SendUserPasswordReset").ProducesETag()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status409Conflict);
+    }
+
+    /// <summary>
+    /// A page of accounts; each row carries the employee's name, looked up through the directory because the employee table belongs to another module.
+    /// </summary>
+    private static async Task<Results<Ok<PageResponse<UserResponse>>, ValidationProblem>> ListAsync(
+        [AsParameters] UserListQuery query,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        CancellationToken cancellationToken)
+    {
+        var errors = query.Validate();
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        var users = context.Set<AppUser>().AsNoTracking();
+        users = query.Role switch
+        {
+            UserRoleFilter.GlobalAdmin => users.Where(user => user.UserRoles.Any(role => role.RoleId == UserRoleIds.Of(UserRole.GlobalAdmin))),
+            UserRoleFilter.Hr => users.Where(user => user.UserRoles.Any(role => role.RoleId == UserRoleIds.Of(UserRole.Hr))),
+            UserRoleFilter.User => users.Where(user => !user.UserRoles.Any()),
+            _ => users,
+        };
+
+        if (query.IsBlocked is { } isBlocked)
+        {
+            users = users.Where(user => user.IsBlocked == isBlocked);
+        }
+
+        if (query.IsInvited is { } isInvited)
+        {
+            users = isInvited ? users.Where(user => user.PasswordHash == null) : users.Where(user => user.PasswordHash != null);
+        }
+
+        if (query.SearchPattern() is { } pattern)
+        {
+            users = users.Where(user => EF.Functions.ILike(user.Email!, pattern, ListRequest.LikeEscape));
+        }
+
+        var total = await users.CountAsync(cancellationToken);
+        var rows = await users
+            .OrderBy(user => user.NormalizedEmail)
+            .ThenBy(user => user.Id)
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(UserResponse.Projection)
+            .ToListAsync(cancellationToken);
+
+        var statuses = await employees.FindManyAsync([.. rows.Select(row => row.EmployeeId).OfType<Guid>().Distinct()], cancellationToken);
+        var items = rows.ConvertAll(row => row with
+        {
+            EmployeeName = row.EmployeeId is { } id && statuses.TryGetValue(id, out var status) ? status.FullName : null,
+        });
+        return TypedResults.Ok(new PageResponse<UserResponse>(items, total, query.Page, query.PageSize));
+    }
+
+    private static async Task<Results<Ok<UserResponse>, NotFound>> GetAsync(
+        Guid id,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        var user = await context.Set<AppUser>()
+            .AsNoTracking()
+            .Where(candidate => candidate.Id == id)
+            .Select(UserResponse.Projection)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        response.SetETag(user.Version);
+        return TypedResults.Ok(user with { EmployeeName = await employees.NameAsync(user.EmployeeId, cancellationToken) });
+    }
+
+    private static async Task<Results<Created<UserResponse>, ValidationProblem, ProblemHttpResult>> CreateAsync(
+        CreateUserRequest request,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        IAuditWriter audit,
+        AccountMail mail,
+        IOptions<AccountLinkOptions> links,
+        TimeProvider time,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        var errors = request.Validate();
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
+        if (request.EmployeeId is { } employeeId)
+        {
+            if (await employees.ProblemAsync(employeeId, cancellationToken) is { } problem)
+            {
+                return Rejection.Invalid("employeeId", problem);
+            }
+
+            if (await context.IsBoundElsewhereAsync(employeeId, Guid.Empty, cancellationToken))
+            {
+                return Rejection.Conflict(EmployeeBinding.AlreadyBound);
+            }
+        }
+
+        var user = new AppUser { EmployeeId = request.EmployeeId };
+        user.SetEmail(request.Email.Trim());
+        var (result, mailSent) = await NewAccount.InviteAsync(
+            user,
+            transaction,
+            () => users.SetRolesAsync(user, request.Roles, audit, context),
+            users,
+            context,
+            mail,
+            links.Value,
+            time,
+            cancellationToken);
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
+        }
+
+        var created = await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent };
+        return TypedResults.Created($"{Route}/{created.Id}", created);
+    }
+
+    /// <summary>
+    /// Replaces the link of an account that has not set its password yet and e-mails it again, so the earlier invitation no longer works.
+    /// </summary>
+    private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> ResendInvitationAsync(
+        Guid id,
+        IfMatch ifMatch,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        AccountMail mail,
+        IOptions<AccountLinkOptions> links,
+        TimeProvider time,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginAccountLockAsync(id, cancellationToken);
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!user.IsInvited || user.IsBlocked)
+        {
+            return Rejection.Conflict(ResendNeedsInvitedAccount);
+        }
+
+        ifMatch.ApplyTo(context, user);
+        var token = user.IssueLink(time.GetUtcNow(), links.Value.InvitationLifetime);
+        var result = await users.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        var mailSent = await mail.SendInvitationAsync(user, token, isRepeat: true, cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent });
+    }
+
+    private static async Task<Results<Ok<UserResponse>, NotFound, ValidationProblem, ProblemHttpResult>> UpdateAsync(
+        Guid id,
+        UpdateUserRequest request,
+        IfMatch ifMatch,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        IHrAssignments hrAssignments,
+        IAuditWriter audit,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        var errors = request.Validate();
+        if (errors.Count > 0)
+        {
+            return TypedResults.ValidationProblem(errors);
+        }
+
+        await using var transaction = await context.BeginExclusiveAsync(employees, cancellationToken);
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (request.EmployeeId is { } employeeId && employeeId != user.EmployeeId)
+        {
+            if (await employees.ProblemAsync(employeeId, cancellationToken) is { } problem)
+            {
+                return Rejection.Invalid("employeeId", problem);
+            }
+
+            if (await context.IsBoundElsewhereAsync(employeeId, user.Id, cancellationToken))
+            {
+                return Rejection.Conflict(EmployeeBinding.AlreadyBound);
+            }
+        }
+
+        var rolesBefore = await users.RolesAsync(user);
+        if (user.IsActiveAdministrator(rolesBefore) && !request.Roles.Contains(UserRole.GlobalAdmin)
+            && !await context.HasOtherAsync(user.Id, cancellationToken))
+        {
+            return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
+        }
+
+        if (rolesBefore.Contains(UserRole.Hr) && !request.Roles.Contains(UserRole.Hr)
+            && request.EmployeeId is { } boundEmployeeId
+            && await hrAssignments.UnitNamesAsync(boundEmployeeId, cancellationToken) is { Count: > 0 } hrUnits)
+        {
+            return Rejection.Conflict(HrRoleKeptMessage(hrUnits));
+        }
+
+        ifMatch.ApplyTo(context, user);
+        if (!request.Roles.ToHashSet().SetEquals(rolesBefore) || request.EmployeeId != user.EmployeeId)
+        {
+            user.EndSessions();
+        }
+
+        user.SetEmail(request.Email.Trim());
+        user.EmployeeId = request.EmployeeId;
+        var result = await users.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            result = await users.SetRolesAsync(user, request.Roles, audit, context);
+        }
+
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken));
+    }
+
+    private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> BlockAsync(
+        Guid id,
+        IfMatch ifMatch,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginExclusiveAsync(employees, cancellationToken);
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        var roles = await users.RolesAsync(user);
+        if (user.IsActiveAdministrator(roles) && !await context.HasOtherAsync(user.Id, cancellationToken))
+        {
+            return Rejection.Conflict(ActiveAdministrators.LastOneMessage);
+        }
+
+        ifMatch.ApplyTo(context, user);
+        user.IsBlocked = true;
+        var result = await users.UpdateSecurityStampAsync(user);
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, roles, employees, response, cancellationToken));
+    }
+
+    private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> UnblockAsync(
+        Guid id,
+        IfMatch ifMatch,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await employees.BeginExclusiveAsync(cancellationToken);
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (user.EmployeeId is { } employeeId && await employees.ProblemAsync(employeeId, cancellationToken) is not null)
+        {
+            return Rejection.Conflict(UnblockNeedsWorkingEmployee);
+        }
+
+        ifMatch.ApplyTo(context, user);
+        user.IsBlocked = false;
+        user.ClearLockout();
+        var result = await users.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken));
+    }
+
+    /// <summary>
+    /// Issues a password reset link to an active registered account and e-mails it, the same link the account could ask for itself;
+    /// the password stays as it is until the user sets a new one from the link, and an earlier link no longer works.
+    /// </summary>
+    private static async Task<Results<Ok<UserResponse>, NotFound, ProblemHttpResult>> SendPasswordResetAsync(
+        Guid id,
+        IfMatch ifMatch,
+        UserManager<AppUser> users,
+        AppDbContext context,
+        IEmployeeDirectory employees,
+        AccountMail mail,
+        IAuditWriter audit,
+        IOptions<AccountLinkOptions> links,
+        TimeProvider time,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await context.BeginAccountLockAsync(id, cancellationToken);
+        var user = await users.FindByIdAsync(id.ToString());
+        if (user is null)
+        {
+            return TypedResults.NotFound();
+        }
+
+        if (!await employees.MayResetPasswordAsync(user, cancellationToken))
+        {
+            return Rejection.Conflict(ResetNeedsActiveAccount);
+        }
+
+        ifMatch.ApplyTo(context, user);
+        var token = user.IssueLink(time.GetUtcNow(), links.Value.PasswordResetLifetime);
+        audit.Stage(new AuditEntry(PasswordResetQueue.RequestedAction, nameof(AppUser), user.Id.ToString()), context);
+        var result = await users.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            return Rejections.From(result);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+        var mailSent = await mail.SendPasswordResetAsync(user, token, requestId: null, cancellationToken);
+        return TypedResults.Ok(await RespondAsync(user, await users.RolesAsync(user), employees, response, cancellationToken) with { MailSent = mailSent });
+    }
+
+    /// <summary>
+    /// Why the HR role stays: the account's employee is the responsible HR of the named units, the first few of them by name.
+    /// </summary>
+    private static string HrRoleKeptMessage(IReadOnlyList<string> unitNames)
+    {
+        var named = string.Join(", ", unitNames.Take(HrUnitsNamed).Select(name => $"«{name}»"));
+        var rest = unitNames.Count > HrUnitsNamed ? $" и ещё {unitNames.Count - HrUnitsNamed}" : string.Empty;
+        return $"Роль «HR» нельзя снять: сотрудник учётной записи закреплён ответственным HR подразделений {named}{rest}. Сначала закрепите за ними другого HR.";
+    }
+
+    private static async Task<UserResponse> RespondAsync(
+        AppUser user,
+        IReadOnlyList<UserRole> roles,
+        IEmployeeDirectory employees,
+        HttpResponse response,
+        CancellationToken cancellationToken)
+    {
+        response.SetETag(user.Version);
+        return UserResponse.From(user, roles, await employees.NameAsync(user.EmployeeId, cancellationToken));
+    }
+}

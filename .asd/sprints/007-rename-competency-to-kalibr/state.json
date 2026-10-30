@@ -1,0 +1,169 @@
+{
+  "sprint_id": "007-rename-competency-to-kalibr",
+  "branch": "sprint/007-rename-competency-to-kalibr",
+  "phase": "pr",
+  "workflow": "lite",
+  "documents": {
+    "audit": true,
+    "prd": true,
+    "ux_spec": false,
+    "design_system": true,
+    "adr": true,
+    "c4": true
+  },
+  "cleanup": true,
+  "user_gates": "adaptive",
+  "gate_decisions": [
+    {
+      "gate": "workflow choice",
+      "decision_actor": "user",
+      "reason": "lite (recommended)",
+      "evidence": "decisions-log.md 2026-10-30 workflow",
+      "artifact_revision": "3e5594d"
+    },
+    {
+      "gate": "approach choice",
+      "decision_actor": "user",
+      "reason": "A (recommended)",
+      "evidence": "research.md Approaches Chosen",
+      "artifact_revision": "research.md stage c"
+    },
+    {
+      "gate": "retro intake dispositions",
+      "decision_actor": "user",
+      "reason": "006 A-1 include AC-14; A-5 include AC-15 (narrowed); P-1 include AC-16",
+      "evidence": "retro-backlog.md; HEAD 3e5594d verified unresolved; cost 0 iterations/0 fix rounds",
+      "artifact_revision": "sprint.md AC-14..16"
+    },
+    {
+      "gate": "scope",
+      "decision_actor": "user",
+      "reason": "accept without revisions",
+      "evidence": "sprint.md AC-1..AC-16",
+      "artifact_revision": "sprint.md accepted 2026-10-30"
+    },
+    {
+      "gate": "audit contradiction",
+      "decision_actor": "user",
+      "reason": "AC-9 undeliverable via sprint-mediated asd-init; edit commands.yaml in impl",
+      "evidence": "audit.md Contradictions; decisions-log.md 2026-10-30",
+      "artifact_revision": "sprint.md AC-17"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "retire AC-9, add AC-17",
+      "evidence": "decisions-log.md 2026-10-30 AC-9",
+      "artifact_revision": "sprint.md AC-17"
+    },
+    {
+      "gate": "audit",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: AC-9 contradiction settled by user (AC-17), no subsystem, migration-deletion or document-skip gate pending",
+      "evidence": "audit.md",
+      "artifact_revision": "audit.md 2026-10-30"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "retire AC-11 -> AC-18, AC-15 -> AC-19",
+      "evidence": "decisions-log.md 2026-10-30 memory; cost 0 iterations/0 fix rounds",
+      "artifact_revision": "sprint.md AC-18..19"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: every Task traces to user-approved AC and scope answers; no settings change, stub or new dependency",
+      "evidence": "plan.md; sprint.md AC-1..AC-19",
+      "artifact_revision": "plan.md 2026-10-30"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: amendment moves test string literals out of dev Task 1 into Test-only Task 3 (wave 2), impl never-modify-test rule; no AC, settings, stub or dependency change",
+      "evidence": "plan.md Task 3, Dependencies wave 2; sprint-lifecycle.md Plan file format Test-only declaration",
+      "artifact_revision": "plan.md 2026-10-30 amended"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: Tasks 1-3 ticked, build+lint, check:api, has-pending-model-changes clean; tester flag (dotnet test 0 tests) investigated: --list-tests finds 952, not a defect; no stubs; contract/session effects authorized by AC-5, AC-8",
+      "evidence": "commits 198631db 07d83cca f62e2c5f ce7a2ea8 b176f509; decisions-log.md 2026-10-30 impl assessment",
+      "artifact_revision": "HEAD 7f46a22a"
+    },
+    {
+      "gate": "impl-review green handoff",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: wave 1 of 1 roster met (combined APPROVE, external APPROVE, both latched at 1); terminal full suite green, no defects, no open findings",
+      "evidence": "reviews/impl/wave-1/iter-01/combined.md, external.md; test-plan.md Suite run HEAD a2f3855b (.NET 952/952, web 850/850, lint and build exit 0); commit ec1fad8f",
+      "artifact_revision": "HEAD ec1fad8f"
+    },
+    {
+      "gate": "decomposition",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: no new or changed subsystem boundary; only module and path names change (Competency.* → Kalibr.*) in subsystems.md labels and <id>.md key paths",
+      "evidence": "git diff -- docs/architecture/subsystems.md docs/architecture/*.md; sprint.md AC-10",
+      "artifact_revision": "docs/architecture/subsystems.md"
+    },
+    {
+      "gate": "PR publication",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: DoD met (plan, reviews, full suite, retro, stubs); scope authority — user-accepted sprint.md AC-1..AC-19; gh authenticated with push access",
+      "evidence": "decisions-log.md 2026-10-30 pr open mode DoD; test-plan.md Suite run",
+      "artifact_revision": "PR #12"
+    }
+  ],
+  "task_routing": {
+    "Task 1": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "risk:session reset",
+      "resolved_model": "sonnet"
+    },
+    "Task 2": {
+      "execution": "agent",
+      "tier": "standard",
+      "reason": "artifact-risk:deploy literal swap",
+      "resolved_model": "sonnet"
+    }
+  },
+  "skipped_phases": [],
+  "reviews": {
+    "design": {
+      "iteration": 0,
+      "verdicts": {},
+      "latched": {}
+    },
+    "impl": {
+      "wave": 1,
+      "waves": [
+        {
+          "iteration": 1,
+          "verdicts": {
+            "iter-01": {
+              "combined": "APPROVE",
+              "external": "APPROVE"
+            }
+          },
+          "iteration_heads": {
+            "iter-01": "0a946499771e664dd007c3995eb152c1387fcf6a"
+          },
+          "latched": {
+            "combined": 1,
+            "external": 1
+          }
+        }
+      ]
+    }
+  },
+  "created_at": "2026-10-30T15:31:30.399Z",
+  "updated_at": "2026-10-30T18:36:37.697Z",
+  "review_fixes_pending": null,
+  "test_defects_pending": null,
+  "pr": {
+    "number": 12,
+    "url": "https://github.com/LordKuper/competency-management-service/pull/12",
+    "state": "open"
+  },
+  "archived_at": null
+}
