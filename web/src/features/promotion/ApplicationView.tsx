@@ -121,11 +121,12 @@ function ResultSection({ result, formalFailures, status }: ResultSectionProps) {
 }
 
 function ArtifactLinks({ artifact }: { artifact?: Artifact }) {
+  const { token } = theme.useToken();
   if (!artifact || artifact.links.length === 0) {
     return <Typography.Text type="secondary">Не приложен</Typography.Text>;
   }
   return (
-    <ul style={{ margin: 0, paddingInlineStart: "1em" }}>
+    <ul style={{ margin: 0, paddingInlineStart: token.padding }}>
       {artifact.links.map((link) => (
         <li key={link.url}>
           <a href={link.url} target="_blank" rel="noreferrer noopener">

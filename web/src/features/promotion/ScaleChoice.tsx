@@ -1,4 +1,4 @@
-import { Button, Flex, Segmented, Tooltip, Typography } from "antd";
+import { Button, Flex, Segmented, Tooltip, Typography, theme } from "antd";
 import { scalePointLabel } from "./promotionTexts";
 
 /** One point of the scale of a competency. */
@@ -36,6 +36,7 @@ interface ScaleHelpProps {
 
 /** The round «?» next to a score: shows the levels of that competency's scale with the current one marked, on hover, focus and click. */
 export function ScaleHelp({ name, points, current }: ScaleHelpProps) {
+  const { token } = theme.useToken();
   return (
     <Tooltip
       trigger={["hover", "focus", "click"]}
@@ -49,7 +50,10 @@ export function ScaleHelp({ name, points, current }: ScaleHelpProps) {
           {points.map((point) => (
             <span
               key={point.score}
-              style={{ fontWeight: point.score === current ? 700 : 400 }}
+              style={{
+                fontWeight:
+                  point.score === current ? token.fontWeightStrong : undefined,
+              }}
             >
               {point.score === current ? "● " : ""}
               {scalePointLabel(point)}
