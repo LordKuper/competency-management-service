@@ -4,7 +4,11 @@ import type { FilterDropdownProps } from "antd/es/table/interface";
 import { useMemo } from "react";
 import { orgUnitTreeQuery } from "../org-structure/orgStructureApi";
 import { buildUnitTree, type UnitNode } from "../org-structure/orgTree";
+import { useUnitTreeSearch } from "../org-structure/useUnitTreeSearch";
 import { FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
+
+/** Popup width relative to the filter box. */
+const POPUP_WIDTH_RATIO = 1.5;
 
 interface TreeItem {
   value: string;
@@ -32,19 +36,20 @@ function UnitTreeFilter({
   const { token } = theme.useToken();
   const { data, isFetching } = useQuery(orgUnitTreeQuery);
   const treeData = useMemo(() => items(buildUnitTree(data ?? [])), [data]);
+  const search = useUnitTreeSearch(treeData);
+  const width = token.controlHeight * FILTER_WIDTH_IN_CONTROLS;
   return (
     <div style={{ padding: token.paddingXS }}>
       <TreeSelect
-        showSearch
         allowClear
         treeDefaultExpandAll
-        treeNodeFilterProp="title"
         aria-label="Подразделение"
         loading={isFetching}
-        treeData={treeData}
+        {...search}
         value={selectedKeys[0] as string | undefined}
-        style={{ width: token.controlHeight * FILTER_WIDTH_IN_CONTROLS }}
-        popupMatchSelectWidth={false}
+        style={{ width }}
+        // A number keeps the popup wider than the box for nested names and the list virtual (false turns it off).
+        popupMatchSelectWidth={width * POPUP_WIDTH_RATIO}
         getPopupContainer={(node) => node.parentElement ?? document.body}
         onChange={(value: string | undefined) => {
           setSelectedKeys(value ? [value] : []);
