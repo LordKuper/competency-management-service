@@ -1,4 +1,8 @@
+import { theme } from "antd";
 import { useDeferredValue, useMemo, useState } from "react";
+
+/** Popup width, in control heights; the global popup max-width still caps it. */
+const POPUP_WIDTH_IN_CONTROLS = 20;
 
 interface SearchableNode<TNode> {
   value: string;
@@ -37,10 +41,12 @@ function keysOf<TNode extends SearchableNode<TNode>>(
 /**
  * Props that make a unit TreeSelect filter its own tree. rc-tree-select would filter and re-expand the whole tree
  * synchronously on every keystroke; here the typed text shows at once and the tree follows from a deferred render.
+ * The popup gets a fixed width, because the app-wide `popupMatchSelectWidth={false}` would make the list non-virtual.
  */
 export function useUnitTreeSearch<TNode extends SearchableNode<TNode>>(
   treeData: TNode[],
 ) {
+  const { token } = theme.useToken();
   const [text, setText] = useState("");
   const needle = useDeferredValue(text.toLowerCase());
   const { shown, expandedKeys } = useMemo(() => {
@@ -50,6 +56,7 @@ export function useUnitTreeSearch<TNode extends SearchableNode<TNode>>(
   }, [treeData, needle]);
   return {
     treeData: shown,
+    popupMatchSelectWidth: token.controlHeight * POPUP_WIDTH_IN_CONTROLS,
     showSearch: {
       searchValue: text,
       onSearch: setText,

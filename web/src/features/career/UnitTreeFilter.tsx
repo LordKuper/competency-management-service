@@ -7,9 +7,6 @@ import { buildUnitTree, type UnitNode } from "../org-structure/orgTree";
 import { useUnitTreeSearch } from "../org-structure/useUnitTreeSearch";
 import { FILTER_WIDTH_IN_CONTROLS } from "./CatalogSelect";
 
-/** Popup width relative to the filter box. */
-const POPUP_WIDTH_RATIO = 1.5;
-
 interface TreeItem {
   value: string;
   title: string;
@@ -37,7 +34,6 @@ function UnitTreeFilter({
   const { data, isFetching } = useQuery(orgUnitTreeQuery);
   const treeData = useMemo(() => items(buildUnitTree(data ?? [])), [data]);
   const search = useUnitTreeSearch(treeData);
-  const width = token.controlHeight * FILTER_WIDTH_IN_CONTROLS;
   return (
     <div style={{ padding: token.paddingXS }}>
       <TreeSelect
@@ -47,9 +43,7 @@ function UnitTreeFilter({
         loading={isFetching}
         {...search}
         value={selectedKeys[0] as string | undefined}
-        style={{ width }}
-        // A number keeps the popup wider than the box for nested names and the list virtual (false turns it off).
-        popupMatchSelectWidth={width * POPUP_WIDTH_RATIO}
+        style={{ width: token.controlHeight * FILTER_WIDTH_IN_CONTROLS }}
         getPopupContainer={(node) => node.parentElement ?? document.body}
         onChange={(value: string | undefined) => {
           setSelectedKeys(value ? [value] : []);
