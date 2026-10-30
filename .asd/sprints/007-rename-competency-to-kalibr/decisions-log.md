@@ -43,3 +43,12 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - **Decision**: Строковые литералы тестов с именем продукта (`DeploymentTests.cs`, `ApiContract.cs`, `ApiHost.cs`, `PlatformTests.cs`, `OrgImportParserTests.cs`) вынесены из Task 1 в Test-only Task 3 (`asd-tester`, волна 2); Task 1 меняет в тестах только то, что нужно для компиляции (namespace, `using`, `cref`, csproj). Найден дополнительный литерал `PlatformTests.cs` `FailureLogCategory = "Competency.Platform.ProblemExceptionHandler"`.
 - **Rationale**: impl запрещает dev'у править тесты, кроме Test-only Task (`sprint-lifecycle.md` «Plan file format»); AC и решения пользователя не меняются, поэтому принятие плана повторено адаптивно.
 - **Affected docs**: [plan.md](plan.md)
+- 2026-10-30 — route Task 1: standard, dispatch HEAD 21713c10; risk change: session reset, artifact: literal swap across build graph via build, has-pending-model-changes, check:api, diff pattern check
+- 2026-10-30 — route Task 2: standard, dispatch HEAD 21713c10; risk artifact: deploy literal swap via rg product-name patterns in deploy/
+- 2026-10-30 — route Task 3: standard, dispatch HEAD b176f509
+
+## 2026-10-30 — impl assessment approved
+
+- **Decision**: Impl принят адаптивно: Task 1 (`198631db` git mv, `07d83cca` содержимое), Task 2 (`f62e2c5f`), Task 3 (`ce7a2ea8`) и правки оркестратора `commands.yaml`, `custom-coding-rules.md`, `custom-common-rules.md` с правилом AC-16 (`b176f509`). Флаг тестера «`dotnet test --solution Kalibr.slnx` находит 0 тестов» проверен: `dotnet test --solution Kalibr.slnx --no-build --list-tests` находит 952 теста, код 0 — дефекта нет, причина в способе запуска самопроверки.
+- **Rationale**: Все подзадачи отмечены; `dotnet build Kalibr.slnx` (Debug и Release) — 0 предупреждений и 0 ошибок, web `build`, `lint`, `check:api` чисты, `has-pending-model-changes` чист; диф раунда не выходит за пути задач и строки оркестратора плана. Сброс сессий и смена `info.title` разрешены AC-5 и AC-8; заглушек спринт не добавил.
+- **Affected docs**: [plan.md](plan.md)
