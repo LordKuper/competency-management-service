@@ -98,4 +98,63 @@ public sealed class PromotionHeldApplicationTests(PromotionHost fixture, TestEnv
         (await scene.StatusNowAsync(session.Team, session.TeamApplication.Id)).Should().Be("Decided");
         (await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id)).Should().Be("NoDecision");
     }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(5)]
+    public async Task Ac66_Ac53_AnApplicationHeldToTheEndOfTheCommissionStage_AfterARollbackWaitsForTheChairAgain_AndReachesTheCommissionWithALetter(int stage)
+    {
+        var session = await RatedSessionWithoutSiblingChairAsync();
+        var scene = session.Scene;
+        await scene.PutInStageAsync(6);
+        (await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id)).Should().Be("NoDecision");
+        (await scene.StatusNowAsync(session.Team, session.TeamApplication.Id)).Should().Be("NoDecision");
+
+        await RollBackAsync(scene, stage);
+
+        (await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id)).Should().Be("Admitted", "without a chair it is held again, not handed to a commission that cannot act");
+        (await scene.StatusNowAsync(session.Team, session.TeamApplication.Id)).Should().Be("UnderReview", "the unit with a chair, left without a decision by the end, returns to its commission");
+
+        var newChair = scene.Org.DepartmentHead;
+        (await PromotionScene.SaveCommissionAsync(scene.Org.SiblingHr.Client, scene.Org.Sibling.Id, [newChair.Employee], newChair.Employee)).Expect(HttpStatusCode.OK);
+        await Waiting.UntilAsync(
+            async () => await scene.StatusNowAsync(session.Sibling, session.SiblingApplication.Id) == "UnderReview",
+            "the held application reached the commission once the chair was named",
+            TimeSpan.FromSeconds(60));
+
+        (await environment.Mail.WaitForContainingAsync(newChair.User.Email, $"promotion/commission/{scene.WaveId}/{scene.Org.Sibling.Id}")).Should().NotBeEmpty("the new chair is told of the application that arrived");
+    }
+
+    [Fact]
+    public async Task Ac66_Ac65_AnApplicationOwingArtifactsHeldPastTheDeadline_ReachesTheNewChairMarkedAsMissingThem()
+    {
+        var scene = await fixture.NewSceneAsync(withSibling: true);
+        var raters = await scene.NewRatersAsync(3, 2);
+        var candidate = await scene.NewCandidateAsync(scene.Sibling!);
+        var application = await scene.SubmitForAdmissionAsync(candidate, raters, scene.Sibling);
+        await scene.BlockAsync(scene.Org.SiblingHead);
+        await scene.PutInStageAsync(3);
+        await scene.RateAsync(raters, application.Id, 2, 4, scene.Sibling);
+        await scene.PutInStageAsync(5);
+        (await scene.StatusNowAsync(candidate, application.Id)).Should().Be("Admitted", "the deadline passed, but no commission can take it");
+
+        var newChair = scene.Org.DepartmentHead;
+        (await PromotionScene.SaveCommissionAsync(scene.Org.SiblingHr.Client, scene.Org.Sibling.Id, [newChair.Employee], newChair.Employee)).Expect(HttpStatusCode.OK);
+        await Waiting.UntilAsync(
+            async () => await scene.StatusNowAsync(candidate, application.Id) == "UnderReview",
+            "the held application reached the commission once the chair was named",
+            TimeSpan.FromSeconds(60));
+
+        var review = (await newChair.Client.GetAsync($"/api/v1/promotion/applications/{application.Id}/review")).Expect(HttpStatusCode.OK);
+        review.Json!["artifactsMissing"]!.GetValue<bool>().Should().BeTrue("it owed an artifact and gave none");
+    }
+
+    private static async Task RollBackAsync(PromotionScene scene, int stage)
+    {
+        var route = $"/api/v1/promotion/waves/{scene.WaveId}/rollback";
+        var wave = (await scene.Org.Admin.GetAsync($"/api/v1/promotion/waves/{scene.WaveId}")).Expect(HttpStatusCode.OK);
+        var ends = wave.Json!["endsOn"]!.AsArray().Select(day => DateOnly.Parse(day!.GetValue<string>())).ToArray();
+        var renewed = ends.Select((end, index) => index < stage - 1 ? end : PromotionScene.Today.AddDays(3 * (index - stage + 2)));
+        (await scene.Org.Admin.PostAsync(route, new { stage, endsOn = renewed }, wave.ETag)).Expect(HttpStatusCode.OK);
+    }
 }

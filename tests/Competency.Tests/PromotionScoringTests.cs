@@ -256,6 +256,20 @@ public sealed class PromotionScoringTests
         }
     }
 
+    [Theory]
+    [InlineData(PromotionStage.Artifacts)]
+    [InlineData(PromotionStage.Review)]
+    public void Ac66_AnApplicationHeldForWantOfAChairWhenTheCommissionStageEnded_GoesBackToAdmitted_AndIsMarkedNoMore(int stage)
+    {
+        var held = new PromotionApplication { Status = ApplicationStatus.NoDecision, MeetsAfterRating = true, WasHeldAtClose = true, ReviewLetterPending = true };
+
+        held.ReturnToStage(stage);
+
+        held.Status.Should().Be(ApplicationStatus.Admitted, "it never reached the commission, so it is handed over with the chair check again");
+        held.ReviewLetterPending.Should().BeFalse();
+        held.WasHeldAtClose.Should().BeFalse();
+    }
+
     [Fact]
     public void Ac53_AnApplicationTheChairAlreadyDecided_IsDecidedAgainAtOnce_WhenItReachesTheCommissionAgain()
     {
