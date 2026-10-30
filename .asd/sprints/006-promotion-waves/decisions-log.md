@@ -194,3 +194,4 @@ A decision whose value must survive this sprint's archival is ALSO written into 
 - 2026-10-30 — sprint 006-promotion-waves iteration wave-1/iter-03: external review unavailable: negative cache — quota (Codex usage limit, retry after 2026-10-30T11:46:18Z; провайдер назвал сброс 15:21 MSK); availability skip recorded, 421 files carried as Unreviewed files (F-6)
 - 2026-10-30 — impl-review wave-1/iter-03 verdicts: combined CONCERNS (F1 medium: устаревший doc-комментарий `hasAdmitted` в DueStep.cs после F4; floor medium), external APPROVE (skipped).
 - 2026-10-30 — impl-review wave-1/iter-03: unresolved findings combined F1 → impl review-fix (review_fixes_pending=wave-1/iter-03)
+- 2026-10-30 — route F1 (wave-1/iter-03 combined): standard, dispatch HEAD 033db2b0
