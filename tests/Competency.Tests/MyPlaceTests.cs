@@ -41,7 +41,7 @@ public sealed class MyPlaceTests(CareerHost fixture) : IClassFixture<CareerHost>
         var next = track["nextLevels"]!.AsArray().Single()!;
         next["id"]!.GetValue<Guid>().Should().Be(kit.Senior.Id);
         next["requirements"]!.AsArray().Select(requirement => (requirement!["competencyId"]!.GetValue<Guid>(), requirement["requiredScore"]!.GetValue<int>(), requirement["type"]!.GetValue<string>()))
-            .Should().Equal((kit.Critical.Id, 3, "Critical"), (kit.Profile.Id, 2, "Profile"));
+            .Should().Equal((kit.Critical.Id, 3, "Critical"), (kit.Profile.Id, 2, "Additional"));
         var scale = (await org.Admin.GetAsync($"/api/v1/career/scales/{CareerScenarios.BaseScaleId}")).Expect(HttpStatusCode.OK).Json!;
         next["requirements"]![0]!["scoreLabel"]!.GetValue<string>().Should().Be(
             scale["points"]!.AsArray().Single(point => point!["score"]!.GetValue<int>() == 3)!["label"]!.GetValue<string>());

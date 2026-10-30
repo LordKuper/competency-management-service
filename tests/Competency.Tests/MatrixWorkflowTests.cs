@@ -103,6 +103,60 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
         }
     }
 
+    [Fact]
+    public async Task Ac93_HandOver_RefusesCompetencyWeightsThatDoNotFitTheirGroup_AndAThresholdWhenEveryCompetencyIsCritical()
+    {
+        var org = await fixture.OrgAsync();
+        var partial = await MatrixKit.CreateAsync(org);
+        var notHundred = await MatrixKit.CreateAsync(org);
+        var onlyCritical = await MatrixKit.CreateAsync(org);
+        var fits = await MatrixKit.CreateAsync(org);
+
+        (await partial.SaveAsync(org.TeamHead.Client, WithWeights(partial, 100))).Expect(HttpStatusCode.OK);
+        (await notHundred.SaveAsync(org.TeamHead.Client, WithWeights(notHundred, 60, 30))).Expect(HttpStatusCode.OK);
+        (await onlyCritical.SaveAsync(org.TeamHead.Client, onlyCritical.Content())).Expect(HttpStatusCode.OK);
+        var critical = onlyCritical.Content();
+        critical["competencies"]![1]!["type"] = "Critical";
+        (await onlyCritical.SaveAsync(org.TeamHead.Client, critical)).Expect(HttpStatusCode.OK);
+        var newThreshold = onlyCritical.Content();
+        newThreshold["competencies"]![1]!["type"] = "Critical";
+        newThreshold["levels"]![0]!["minOverallPercent"] = 65;
+        var refusedThreshold = await onlyCritical.SaveAsync(org.TeamHead.Client, newThreshold);
+        (await fits.SaveAsync(org.TeamHead.Client, WithWeights(fits, 60, 40))).Expect(HttpStatusCode.OK);
+
+        string Weights(MatrixKit kit) =>
+            $"Веса компетенций вне блоков на уровне «{kit.Junior.Json!["name"]!.GetValue<string>()}» заданы не для всех компетенций или не дают в сумме 100 %";
+        var cases = new (MatrixKit Kit, string[] Problems)[]
+        {
+            (partial, [Weights(partial)]),
+            (notHundred, [Weights(notHundred)]),
+            (onlyCritical, [
+                $"На уровне «{onlyCritical.Junior.Json!["name"]!.GetValue<string>()}» все компетенции критические — минимальный общий порог не задаётся",
+                $"На уровне «{onlyCritical.Senior.Json!["name"]!.GetValue<string>()}» все компетенции критические — минимальный общий порог не задаётся"]),
+        };
+
+        foreach (var (kit, problems) in cases)
+        {
+            var refused = await kit.TransitAsync(org.TeamHead.Client, "submit");
+
+            refused.Status.Should().Be(HttpStatusCode.Conflict, refused.Body);
+            refused.Json!["errors"]!["content"]!.AsArray().Select(problem => problem!.GetValue<string>()).Should().Equal(problems);
+        }
+
+        refusedThreshold.Status.Should().Be(HttpStatusCode.BadRequest, "a threshold cannot be set where every competency is critical");
+        refusedThreshold.FieldErrors("content").Should().ContainSingle().Which.Should().Contain("Минимальный общий порог не задаётся");
+        (await fits.TransitAsync(org.TeamHead.Client, "submit")).Expect(HttpStatusCode.OK);
+    }
+
+    private static JsonObject WithWeights(MatrixKit kit, params decimal[] percents)
+    {
+        var content = kit.Content();
+        var competencies = new[] { kit.Critical.Id, kit.Profile.Id };
+        content["competencyWeights"] = new JsonArray([.. percents.Select((percent, index) =>
+            (JsonNode)new JsonObject { ["levelId"] = kit.Junior.Id, ["competencyId"] = competencies[index], ["percent"] = percent })]);
+        return content;
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -449,9 +503,15 @@ public sealed class MatrixWorkflowTests(CareerHost fixture) : IClassFixture<Care
 
         second.Json["number"]!.GetValue<int>().Should().Be(2);
         second.Json["status"]!.GetValue<string>().Should().Be("Draft");
+        var published = kit.Content();
+        foreach (var level in published["levels"]!.AsArray())
+        {
+            level!["requiredEducation"] = null;
+        }
+
         foreach (var part in new[] { "levels", "competencies", "blockWeights", "requirements" })
         {
-            second.Json["content"]![part]!.ToJsonString().Should().Be(kit.Content()[part]!.ToJsonString(), $"the new version copies the published {part}");
+            second.Json["content"]![part]!.ToJsonString().Should().Be(published[part]!.ToJsonString(), $"the new version copies the published {part}");
         }
 
         third.Status.Should().Be(HttpStatusCode.Conflict);

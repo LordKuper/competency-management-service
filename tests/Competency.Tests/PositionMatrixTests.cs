@@ -115,7 +115,7 @@ public sealed class PositionMatrixTests(CareerHost fixture) : IClassFixture<Care
         var requirements = place["positionMatrix"]!["requirements"]!.AsArray();
         place["positionMatrix"]!["matrixId"]!.GetValue<Guid>().Should().Be(matrix.Id);
         requirements.Select(requirement => (requirement!["competencyId"]!.GetValue<Guid>(), requirement["requiredScore"]!.GetValue<int>(), requirement["type"]!.GetValue<string>()))
-            .Should().Equal((critical.Id, 3, "Critical"), (profile.Id, 2, "Profile"));
+            .Should().Equal((critical.Id, 3, "Critical"), (profile.Id, 2, "Additional"));
     }
 
     private static Task<ApiResponse> CreateAsync(ApiClient client, Guid unitId, Guid positionId) =>
@@ -128,7 +128,7 @@ public sealed class PositionMatrixTests(CareerHost fixture) : IClassFixture<Care
         ["levels"] = new JsonArray(new JsonObject { ["levelId"] = positionId, ["minOverallPercent"] = 60 }),
         ["competencies"] = new JsonArray(
             new JsonObject { ["competencyId"] = critical, ["blockId"] = null, ["type"] = "Critical" },
-            new JsonObject { ["competencyId"] = profile, ["blockId"] = null, ["type"] = "Profile" }),
+            new JsonObject { ["competencyId"] = profile, ["blockId"] = null, ["type"] = "Additional" }),
         ["blockWeights"] = new JsonArray(new JsonObject { ["levelId"] = positionId, ["blockId"] = null, ["percent"] = weight }),
         ["requirements"] = new JsonArray(
             new JsonObject { ["levelId"] = positionId, ["competencyId"] = critical, ["requiredScore"] = 3 },

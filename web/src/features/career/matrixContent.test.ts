@@ -5,11 +5,20 @@ import type {
   MatrixRequirement,
 } from "./matrixApi";
 import {
+  areAllCritical,
   cellKey,
   changedPlaces,
+  distributeBlockWeights,
+  evenPercents,
+  hasOwnWeights,
+  ownWeightSum,
   removeCompetency,
   removeLevel,
   setBlockWeight,
+  setCompetencyWeight,
+  setOwnWeights,
+  withEvenBlockWeights,
+  withoutOverallMins,
   withRequirement,
 } from "./matrixContent";
 
@@ -163,5 +172,116 @@ describe("the places an approver changed (AC-19)", () => {
 
     expect(places.requirementCells.size).toBe(0);
     expect(places.weightCells.size).toBe(0);
+  });
+});
+
+describe("an even split of 100 % (AC-93)", () => {
+  it("gives the remainder one percent each to the first parts, so the parts always make 100", () => {
+    expect(evenPercents(3)).toEqual([34, 33, 33]);
+    expect(evenPercents(4)).toEqual([25, 25, 25, 25]);
+    expect(evenPercents(1)).toEqual([100]);
+    expect(evenPercents(7).reduce((sum, part) => sum + part, 0)).toBe(100);
+    expect(evenPercents(0)).toEqual([]);
+  });
+
+  it("replaces the coefficients of one level and leaves the other level alone", () => {
+    const result = distributeBlockWeights(content(), JUNIOR, [CORE, EXTRA]);
+
+    expect(
+      result.blockWeights.filter((weight) => weight.levelId === JUNIOR),
+    ).toEqual([
+      { levelId: JUNIOR, blockId: CORE, percent: 50 },
+      { levelId: JUNIOR, blockId: EXTRA, percent: 50 },
+    ]);
+    expect(
+      result.blockWeights.filter((weight) => weight.levelId === SENIOR),
+    ).toEqual(content().blockWeights.filter((w) => w.levelId === SENIOR));
+  });
+
+  it("splits only for a level that has no coefficient yet, and returns the same document when every level has one", () => {
+    const bare = { ...content(), blockWeights: [] };
+    const full = content();
+
+    const result = withEvenBlockWeights(bare, [JUNIOR, SENIOR], [CORE, EXTRA]);
+
+    expect(result.blockWeights).toHaveLength(4);
+    expect(withEvenBlockWeights(full, [JUNIOR, SENIOR], [CORE])).toBe(full);
+  });
+});
+
+describe("own weights of the competencies of a group (AC-93)", () => {
+  const members = [DESIGN, TESTING];
+  const levels = [JUNIOR, SENIOR];
+
+  it("turns on as an even split at every level, and off back to equal weights without touching other groups", () => {
+    const other = { levelId: JUNIOR, competencyId: "other", percent: 100 };
+    const base = { ...content(), competencyWeights: [other] };
+
+    const on = setOwnWeights(base, levels, members, true);
+    const off = setOwnWeights(on, levels, members, false);
+
+    expect(on.competencyWeights).toHaveLength(5);
+    expect(ownWeightSum(on, JUNIOR, members)).toBe(100);
+    expect(ownWeightSum(on, SENIOR, members)).toBe(100);
+    expect(hasOwnWeights(on, members)).toBe(true);
+    expect(off.competencyWeights).toEqual([other]);
+    expect(hasOwnWeights(off, members)).toBe(false);
+  });
+
+  it("sets and clears the weight of one competency at one level", () => {
+    const on = setOwnWeights(content(), levels, members, true);
+
+    const changed = setCompetencyWeight(on, JUNIOR, DESIGN, 70);
+    const cleared = setCompetencyWeight(changed, JUNIOR, DESIGN, null);
+
+    expect(ownWeightSum(changed, JUNIOR, members)).toBe(120);
+    expect(ownWeightSum(cleared, JUNIOR, members)).toBe(50);
+    expect(ownWeightSum(cleared, SENIOR, members)).toBe(100);
+  });
+
+  it("sums the weights free of float noise", () => {
+    let result = setCompetencyWeight(content(), JUNIOR, DESIGN, 0.1);
+    result = setCompetencyWeight(result, JUNIOR, TESTING, 0.2);
+
+    expect(ownWeightSum(result, JUNIOR, members)).toBe(0.3);
+  });
+
+  it("treats a document written before the weights existed as one without them", () => {
+    expect(hasOwnWeights(content(), members)).toBe(false);
+    expect(ownWeightSum(content(), JUNIOR, members)).toBe(0);
+  });
+});
+
+describe("a version of critical competencies only has no overall threshold (AC-93)", () => {
+  const withTypes = (
+    design: "Critical" | "Additional",
+    testing: "Critical" | "Additional",
+  ) => ({
+    ...content(),
+    competencies: [
+      { competencyId: DESIGN, blockId: null, type: design },
+      { competencyId: TESTING, blockId: null, type: testing },
+    ],
+  });
+
+  it("is true only when every competency of the group is critical, and false for none", () => {
+    expect(
+      areAllCritical(withTypes("Critical", "Critical"), [DESIGN, TESTING]),
+    ).toBe(true);
+    expect(
+      areAllCritical(withTypes("Critical", "Additional"), [DESIGN, TESTING]),
+    ).toBe(false);
+    expect(areAllCritical(withTypes("Critical", "Critical"), [])).toBe(false);
+  });
+
+  it("clears the threshold of every level, and returns the same document when none is set", () => {
+    const cleared = withoutOverallMins(content());
+    const bare = withoutOverallMins(cleared);
+
+    expect(cleared.levels.map((level) => level.minOverallPercent)).toEqual([
+      null,
+      null,
+    ]);
+    expect(withoutOverallMins(bare)).toBe(bare);
   });
 });

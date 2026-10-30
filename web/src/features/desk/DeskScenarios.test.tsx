@@ -278,6 +278,34 @@ describe("scenario cards of the desk (AC-204…AC-211, AC-218)", () => {
     expect(hrefOf(IMPORT)).toBe(deskPaths.orgImport);
   });
 
+  it("offers HR and the administrator the card to announce a career session only while a unit is free for one (AC-89)", () => {
+    const announce = "Объявить карьерную сессию";
+    for (const roles of [
+      { ...NO_ROLES, isHr: true },
+      { ...NO_ROLES, isAdmin: true },
+    ]) {
+      document.body.innerHTML = "";
+      const free = titlesShownFor(roles, deskWith(["WaveUnitAvailable"]));
+      document.body.innerHTML = "";
+      const none = titlesShownFor(roles, deskWith([]));
+
+      expect(free).toContain(announce);
+      expect(none).not.toContain(announce);
+    }
+  });
+
+  it("does not offer the card to announce a career session to a head or to an employee, whatever the desk holds (AC-89)", () => {
+    for (const roles of [
+      { ...NO_ROLES, isHead: true },
+      { ...NO_ROLES, isBound: true },
+    ]) {
+      document.body.innerHTML = "";
+      const titles = titlesShownFor(roles, deskWith(["WaveUnitAvailable"]));
+
+      expect(titles).not.toContain("Объявить карьерную сессию");
+    }
+  });
+
   it("counts a queue as waiting in the queue and the rest as waiting for the user", () => {
     titlesShownFor(
       { ...NO_ROLES, isAdmin: true },

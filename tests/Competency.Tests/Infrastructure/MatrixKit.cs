@@ -88,7 +88,7 @@ public sealed class MatrixKit
         ["levels"] = new JsonArray(Level(Junior.Id, 60), Level(Senior.Id, 70)),
         ["competencies"] = new JsonArray(
             new JsonObject { ["competencyId"] = Critical.Id, ["blockId"] = null, ["type"] = "Critical" },
-            new JsonObject { ["competencyId"] = Profile.Id, ["blockId"] = null, ["type"] = "Profile" }),
+            new JsonObject { ["competencyId"] = Profile.Id, ["blockId"] = null, ["type"] = "Additional" }),
         ["blockWeights"] = new JsonArray(Weight(Junior.Id, 100), Weight(Senior.Id, 100)),
         ["requirements"] = new JsonArray(
             Requirement(Junior.Id, Critical.Id, 2),

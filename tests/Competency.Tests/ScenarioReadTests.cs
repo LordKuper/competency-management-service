@@ -22,7 +22,7 @@ public sealed class ScenarioReadTests(CareerHost fixture) : IClassFixture<Career
         await kit.PublishAsync();
         var second = (await org.TeamHead.Client.PostAsync($"/api/v1/career/matrices/{kit.MatrixId}/versions")).Expect(HttpStatusCode.Created);
         var edited = kit.Content(seniorCriticalScore: 4);
-        edited["competencies"]![0]!["type"] = "Profile";
+        edited["competencies"]![0]!["type"] = "Additional";
         (await kit.SaveAsync(org.TeamHead.Client, edited, versionId: second.Id)).Expect(HttpStatusCode.OK);
         var changed = (await org.TeamHead.Client.GetAsync($"/api/v1/career/matrix-versions/{second.Id}/changes")).Expect(HttpStatusCode.OK).Json!;
         var withoutProfile = kit.Content(seniorCriticalScore: 4);
@@ -118,7 +118,7 @@ public sealed class ScenarioReadTests(CareerHost fixture) : IClassFixture<Career
 
         first["requirements"]!.AsArray().Should().HaveCount(4, "every level has a score for every competency");
         first["requirements"]!.AsArray().Select(requirement => requirement!["requiredScore"]!.GetValue<int>()).Should().OnlyContain(score => score == lowest);
-        first["competencies"]!.AsArray().Select(competency => competency!["type"]!.GetValue<string>()).Should().OnlyContain(type => type == "Profile");
+        first["competencies"]!.AsArray().Select(competency => competency!["type"]!.GetValue<string>()).Should().OnlyContain(type => type == "Additional");
         typed["competencies"]![0]!["type"]!.GetValue<string>().Should().Be("Critical");
         kept["competencies"]![0]!["type"]!.GetValue<string>().Should().Be("Critical", "a type not sent is the one the version had");
     }

@@ -31,13 +31,14 @@ public sealed class DeskPagingTests(CareerHost fixture) : IClassFixture<CareerHo
         var emptyOnly = (await admin.GetAsync("/api/v1/desk/items?group=EmptyUnits")).Expect(HttpStatusCode.OK).Json!;
 
         var groups = desk["groups"]!.AsArray();
-        groups.Select(group => group!["group"]!.GetValue<string>()).Should().Equal("UnitsToConnect", "EmptyUnits");
+        groups.Select(group => group!["group"]!.GetValue<string>()).Should().Equal("UnitsToConnect", "CommissionsWithoutChair", "EmptyUnits");
         var connect = groups[0]!;
         connect["total"]!.GetValue<int>().Should().Be(UnitsInTheGroup);
         connect["items"]!.AsArray().Should().HaveCount(FirstItems);
         connect["isReference"]!.GetValue<bool>().Should().BeFalse();
-        groups[1]!["isReference"]!.GetValue<bool>().Should().BeTrue();
-        desk["actionCount"]!.GetValue<int>().Should().Be(UnitsInTheGroup, "the empty unit is for reference");
+        groups[1]!["isReference"]!.GetValue<bool>().Should().BeFalse("a commission without a chair is an action");
+        groups[2]!["isReference"]!.GetValue<bool>().Should().BeTrue();
+        desk["actionCount"]!.GetValue<int>().Should().Be(UnitsInTheGroup + groups[1]!["total"]!.GetValue<int>(), "the empty unit is for reference");
         var names = connect["items"]!.AsArray().Select(item => item!["object"]!["name"]!.GetValue<string>()).ToList();
         names.Should().BeInAscendingOrder(StringComparer.OrdinalIgnoreCase, "items without a date of an event follow their names");
         firstEleven["items"]!.AsArray().Should().HaveCount(11);

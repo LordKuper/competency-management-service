@@ -12,7 +12,8 @@ namespace Competency.Tests.Infrastructure;
 /// </summary>
 /// <param name="Subject">The subject line.</param>
 /// <param name="Text">The plain-text body.</param>
-public sealed partial record CapturedMail(string Subject, string Text)
+/// <param name="Html">The HTML body; empty for a message without one.</param>
+public sealed partial record CapturedMail(string Subject, string Text, string Html = "")
 {
     private const string TokenKey = "#token=";
 
@@ -141,7 +142,7 @@ public sealed class MailCatcher : IAsyncDisposable
         foreach (var id in ids)
         {
             var message = await GetAsync($"api/v1/message/{id}");
-            mails.Add(new CapturedMail(message["Subject"]!.GetValue<string>(), message["Text"]!.GetValue<string>()));
+            mails.Add(new CapturedMail(message["Subject"]!.GetValue<string>(), message["Text"]!.GetValue<string>(), message["HTML"]?.GetValue<string>() ?? string.Empty));
         }
 
         return [.. mails];

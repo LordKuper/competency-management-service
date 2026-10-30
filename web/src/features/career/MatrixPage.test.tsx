@@ -80,7 +80,11 @@ function serve(
     version: inWorkTag,
   });
   fakeApi.on("GET /api/v1/career/me", () =>
-    Response.json({ headedUnits: heads ? [UNIT] : [], hrUnits: [] }),
+    Response.json({
+      headedUnits: heads ? [UNIT] : [],
+      matrixUnits: heads ? [UNIT] : [],
+      hrUnits: [],
+    }),
   );
   fakeApi.on("GET /api/v1/career/matrices/matrix", () =>
     Response.json({
@@ -93,6 +97,7 @@ function serve(
       trackName: "Бэкенд",
       publishedVersion: published ? ref("Published") : null,
       inWorkVersion: inWork ? ref(shown.status) : null,
+      effectiveUnits: [],
       createdAt: "2026-10-01T10:00:00Z",
     }),
   );
@@ -860,6 +865,74 @@ describe("editing the content of a draft version (AC-14, AC-15, AC-17)", {
     expect(
       within(row).queryByRole("img", { name: "Нет требований" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("gives the coefficients of a level again in an even split on «Распределить поровну», and saves them (AC-93)", async () => {
+    const { opened } = editorWithACompetency();
+    serveEditor({
+      ...opened,
+      content: {
+        ...opened.content,
+        blockWeights: [{ levelId: "junior", blockId: null, percent: 40 }],
+      },
+    });
+    const user = await openPage();
+
+    await user.click(
+      await screen.findByRole("button", { name: /Распределить поровну/ }),
+    );
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
+    const saved = await fakeApi.calls(CONTENT_ROUTE)[0]?.json();
+    expect(saved?.blockWeights).toEqual([
+      { levelId: "junior", blockId: null, percent: 100 },
+    ]);
+  });
+
+  it("fills the coefficients of a level that has none in an even split when the editor opens, and changes none that were typed (AC-93)", async () => {
+    const { opened } = editorWithACompetency();
+    serveEditor({
+      ...opened,
+      content: { ...opened.content, blockWeights: [] },
+    });
+    const user = await openPage();
+
+    await user.click(await screen.findByRole("button", { name: "Сохранить" }));
+
+    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
+    const saved = await fakeApi.calls(CONTENT_ROUTE)[0]?.json();
+    expect(saved?.blockWeights).toEqual([
+      { levelId: "junior", blockId: null, percent: 100 },
+    ]);
+  });
+
+  it("allows no overall threshold on a level whose competencies are all critical, and drops the one that was there (AC-93)", async () => {
+    const { opened } = editorWithACompetency();
+    serveEditor({
+      ...opened,
+      content: {
+        ...opened.content,
+        levels: [{ levelId: "junior", minOverallPercent: 60 }],
+        competencies: [
+          { competencyId: "design", blockId: null, type: "Critical" },
+        ],
+      },
+    });
+    const user = await openPage();
+
+    const threshold = await screen.findByRole("spinbutton", {
+      name: "Минимальный общий порог, %: Младший",
+    });
+    await user.click(screen.getByRole("button", { name: "Сохранить" }));
+
+    expect(threshold).toBeDisabled();
+    expect(threshold).toHaveValue("");
+    await waitFor(() => expect(fakeApi.calls(CONTENT_ROUTE)).toHaveLength(1));
+    const saved = await fakeApi.calls(CONTENT_ROUTE)[0]?.json();
+    expect(saved?.levels).toEqual([
+      { levelId: "junior", minOverallPercent: null },
+    ]);
   });
 
   it("locks every control of the editor while the content is being saved, so that nothing typed then is lost, and frees them once it is saved", async () => {
