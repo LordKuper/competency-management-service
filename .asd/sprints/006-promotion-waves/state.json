@@ -174,6 +174,13 @@
       "reason": "approve AC-93 (even default block coefficients and «Распределить поровну»; threshold unavailable on a level whose required competencies are all critical; opt-in per-block competency weights per level, equal by default); Task 27 wave 27",
       "evidence": "sprint.md, plan.md, decisions-log.md",
       "artifact_revision": "sprint.md AC-93"
+    },
+    {
+      "gate": "initial impl assessment",
+      "decision_actor": "user",
+      "reason": "approve: implementation accepted with Tasks 1-27 (AC-1..AC-93), advance to impl-test",
+      "evidence": "decisions-log.md, plan.md",
+      "artifact_revision": "impl at a937768"
     }
   ],
   "task_routing": {
@@ -366,7 +373,7 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-28T21:00:03.131Z",
+  "updated_at": "2026-10-30T06:32:56.499Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,

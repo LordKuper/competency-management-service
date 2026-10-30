@@ -113,3 +113,5 @@
 {"op":"close","id":"Task 27","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:12:03.298Z","end":"2026-10-29T22:22:42.467Z","outcome":"done","attrs":{}}
 {"op":"open","id":"Task 27 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:22:42.667Z","attrs":{}}
 {"op":"close","id":"Task 27 r2","kind":"dispatch","parent":"impl#1","start":"2026-10-29T22:22:42.667Z","end":"2026-10-29T22:23:45.677Z","outcome":"done","attrs":{}}
+{"op":"open","id":"impl assessment r7","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:24:24.657Z","attrs":{"gate":"impl-assessment"}}
+{"op":"close","id":"impl assessment r7","kind":"user-wait","parent":"impl#1","start":"2026-10-29T22:24:24.657Z","end":"2026-10-30T06:32:32.103Z","outcome":"done","attrs":{"gate":"impl-assessment"}}
