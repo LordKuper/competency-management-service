@@ -1,0 +1,6 @@
+{"op":"open","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-30T15:31:04.494Z","attrs":{}}
+{"op":"open","id":"wait approach choice","kind":"user-wait","parent":"scope#1","start":"2026-10-30T15:32:33.954Z","attrs":{"gate":"approach choice"}}
+{"op":"close","id":"wait approach choice","kind":"user-wait","parent":"scope#1","start":"2026-10-30T15:32:33.954Z","end":"2026-10-30T16:02:55.164Z","outcome":"done","attrs":{"gate":"approach choice"}}
+{"op":"open","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-30T16:04:49.395Z","attrs":{"gate":"scope"}}
+{"op":"close","id":"wait scope","kind":"user-wait","parent":"scope#1","start":"2026-10-30T16:04:49.395Z","end":"2026-10-30T16:14:11.469Z","outcome":"done","attrs":{"gate":"scope"}}
+{"op":"close","id":"scope#1","kind":"phase","parent":null,"start":"2026-10-30T15:31:04.494Z","end":"2026-10-30T16:14:16.845Z","outcome":"done","attrs":{}}

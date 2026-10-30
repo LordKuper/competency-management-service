@@ -1,0 +1,36 @@
+---
+responsibility:
+  owns: sprint scope, goal, top-level acceptance criteria
+  excludes: task breakdown, design decisions, code, audit findings
+  delegates_to: plan.md (tasks), design/ docs (decisions), audit.md (audit)
+---
+
+# Sprint 007-rename-competency-to-kalibr
+
+## Goal
+Переименовать продукт: везде, где используется старое рабочее название Competency (`Competency`, `competency`), заменить его на Kalibr (`Kalibr` / `kalibr`) — решение, проекты `src/Competency.*` и `tests/Competency.Tests`, namespace'ы, lock-файлы, `Dockerfile`, `deploy/`, `openapi/`, `web/`, `docs/`. Меняется только имя продукта; доменный термин «компетенция» (сущности `Competency`, `CompetencyBlock`, `CompetencyScale` и др., таблицы и колонки БД, маршруты и значения enum API, имена миграций EF) остаётся. Требования, ответы пользователя и выбранный подход — `research.md`.
+
+## Acceptance
+- AC-1: Решение и проекты переименованы с сохранением истории (`git mv`): `Competency.slnx` → `Kalibr.slnx`, `Competency.slnLaunch` → `Kalibr.slnLaunch`, папки и `.csproj` `src/Competency.<Module>` → `src/Kalibr.<Module>` (Api, Audit, CareerFramework, Desk, OrgStructure, Platform, Promotion, UserManagement), `tests/Competency.Tests` → `tests/Kalibr.Tests`; пути проектов в решении, профилях запуска, `ProjectReference` и `InternalsVisibleTo` указывают на новые имена.
+- AC-2: Namespace'ы, `using`, полные имена типов в коде и XML-комментариях, строковые имена типов EF (`"Competency.OrgStructure.Employee"` и подобные) и namespace/строки сущностей в файлах миграций и `AppDbContextModelSnapshot.cs` используют `Kalibr.<Module>`; ID и имена классов миграций не меняются, новая миграция не добавляется, `dotnet ef migrations has-pending-model-changes` чист.
+- AC-3: Lock-файлы и имена пакетов: `packages.lock.json` всех проектов ссылаются на новые имена проектов; `web/package.json` и `web/package-lock.json` — `kalibr-web`; корневой `package.json` получает `name: kalibr`, корневой `package-lock.json` — то же имя.
+- AC-4: Образ приложения: `Dockerfile` копирует и собирает `src/Kalibr.*`, `ENTRYPOINT` запускает `Kalibr.Api.dll`, `DataProtection__KeysPath=/var/lib/kalibr/keys`.
+- AC-5: Защищённые данные: ApplicationName DataProtection — `kalibr`, cookie аутентификации — `.kalibr.auth`. Однократный выход всех пользователей и недействительность ранее выданных неиспользованных ссылок (сброс пароля, приглашение) приняты (до 1.0) и одной строкой отмечены в `deploy/README.md`.
+- AC-6: Kubernetes: образ `kalibr-app`, Secret `kalibr-secret`, label `app.kubernetes.io/part-of: kalibr`, `POSTGRES_USER`/`POSTGRES_DB` — `kalibr`, путь ключей `/var/lib/kalibr/keys` в ConfigMap и `mountPath`, строка подключения шаблона Secret — `Database=kalibr;Username=kalibr`; `deploy/README.md` — namespace `kalibr`, имена архива образов, пример адреса `https://kalibr.corp.example`, одна строка о том, что существующая установка со старыми именами не переносится, а ставится заново.
+- AC-7: Dev-стек: проект compose `kalibr-dev`, том `kalibr-dev-pgdata`, `POSTGRES_USER`/`POSTGRES_DB` и healthcheck — `kalibr`, `DockerComposeProjectName` в `docker-compose.dcproj` — `kalibr-dev`, строка подключения и профиль `Kalibr.Api` в `launchSettings.json`; `deploy/dev/README.md` обновлён и говорит, что новый стек начинает с пустой БД, а том `competency-dev-pgdata` и контейнеры проекта `competency-dev` пользователь удаляет сам. Агенты старый том и контейнеры не трогают.
+- AC-8: Контракт API: `openapi/openapi.json` и `web/src/api/schema.d.ts` перегенерированы, `check:api` чист, версия контракта остаётся 1.0.0, доменные имена схем и маршрутов не меняются.
+- AC-9: Настройки и правила ASD проекта: `.asd/project/commands.yaml` использует новые имена (изменение настроек, объявленное в плане, через `/asd-init` в sprint-mediated режиме); `.asd/project/custom-common-rules.md` и `custom-coding-rules.md` называют `Kalibr.Api`, `Kalibr.slnx`, `Kalibr.Platform`; ссылки на id прошлых спринтов (`003-positions-career-competency#…`) не меняются.
+- AC-10: Документация `docs/**` называет продукт и его проекты, пути, образы и ресурсы новыми именами; доменный термин «компетенция» и его английские имена в документации остаются.
+- AC-11: Память агентов `.claude/agent-memory/**`: имена продукта (`Competency.*`, `.competency.auth`, `competency-dev*`, `/var/lib/competency/keys`) заменены точечными правками; файл `asd-tester-critical/project_competency-test-harness.md` переименован в `project_kalibr-test-harness.md` вместе со ссылками на него.
+- AC-12: Проверки зелёные: `dotnet build Kalibr.slnx` без предупреждений и ошибок, `dotnet test --solution Kalibr.slnx`, `npm --prefix web run lint`, `build`, `test` и `check:api`.
+- AC-13: `rg -i competency` по репозиторию без `node_modules`, `bin`, `obj`, `dist`, `TestResults`, `.vs`, `.git` находит только доменный термин и места, перечисленные в разделе «Out of scope» ниже; итоговый список осознанно оставленных мест приведён в описании PR.
+- AC-14: В памяти `asd-tester` записано: порог теста, закреплённый в `docs/architecture/` (бюджет SQL-команд, лимиты), — контракт; красный прогон против него — дефект кода `D-N`, порог не меняется. (`006-promotion-waves#A-1`)
+- AC-15: В памяти `asd-tester` записано: операция `suite` журнала времени открывается перед каждым прогоном набора, включая прогон до написания тестов (закрытие сразу после прогона уже записано). (`006-promotion-waves#A-5`, сужена)
+- AC-16: В `.asd/project/custom-common-rules.md` есть правило: для спринта с новыми экранами нескольких ролей на scope, до плана, согласуются макеты экранов каждой роли и сквозной проход процесса по этапам. (`006-promotion-waves#P-1`)
+
+## Out of scope (optional)
+- Доменный термин «компетенция» во всех формах: типы, таблицы, колонки, ограничения и индексы БД, маршруты и схемы API, имена миграций EF, тексты интерфейса, идентификаторы сидов (`tests/perf/seed-10k.sql`).
+- Архив прошлых спринтов `.asd/sprints/archived/**`, id прошлых спринтов в ссылках (`003-positions-career-competency`) и папка, id и ветка этого спринта (`007-rename-competency-to-kalibr`), описывающие само переименование.
+- Инфраструктура воркфлоу ASD (`.asd/rules/`, `.asd/templates/`, сгенерированные `.claude/{agents,skills,hooks}`, `.codex/`, `.agents/skills/`).
+- Переименование репозитория на GitHub (`LordKuper/competency-management-service`) и локальной папки — пользователь делает сам после merge.
+- Перенос данных dev-БД и существующих установок Kubernetes со старыми именами; удаление старого тома `competency-dev-pgdata`.
