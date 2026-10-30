@@ -27,7 +27,8 @@ internal sealed class CommissionReader(
     public async Task<IReadOnlyDictionary<Guid, CommissionRoster>> ReadAsync(IReadOnlyCollection<Guid> unitIds, CancellationToken cancellationToken)
     {
         var ids = unitIds.Distinct().ToArray();
-        var units = await employees.FindUnitsAsync(ids, cancellationToken);
+        var allUnits = (await employees.FindOrgSnapshotAsync(cancellationToken)).Units;
+        var units = ids.Where(allUnits.ContainsKey).ToDictionary(id => id, id => allUnits[id]);
         var commissions = await context.Set<PromotionCommission>()
             .AsNoTracking()
             .Where(commission => ids.Contains(commission.OrgUnitId))
