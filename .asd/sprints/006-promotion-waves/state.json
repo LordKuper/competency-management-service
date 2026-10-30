@@ -472,8 +472,8 @@
     }
   },
   "created_at": "2026-10-27T16:05:59.306Z",
-  "updated_at": "2026-10-30T10:49:58.116Z",
-  "review_fixes_pending": "wave-1/iter-02",
+  "updated_at": "2026-10-30T10:59:11.454Z",
+  "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
   "archived_at": null
