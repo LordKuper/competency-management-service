@@ -8,3 +8,7 @@
 {"op":"open","id":"wait audit contradiction","kind":"user-wait","parent":"audit#1","start":"2026-10-30T16:17:55.423Z","attrs":{"gate":"audit contradiction"}}
 {"op":"close","id":"wait audit contradiction","kind":"user-wait","parent":"audit#1","start":"2026-10-30T16:17:55.423Z","end":"2026-10-30T16:19:30.798Z","outcome":"done","attrs":{"gate":"audit contradiction"}}
 {"op":"close","id":"audit#1","kind":"phase","parent":null,"start":"2026-10-30T16:14:35.658Z","end":"2026-10-30T16:20:53.926Z","outcome":"done","attrs":{}}
+{"op":"open","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-30T16:20:59.657Z","attrs":{}}
+{"op":"open","id":"wait memory scope","kind":"user-wait","parent":"plan#1","start":"2026-10-30T16:22:43.082Z","attrs":{"gate":"new or changed scope"}}
+{"op":"close","id":"wait memory scope","kind":"user-wait","parent":"plan#1","start":"2026-10-30T16:22:43.082Z","end":"2026-10-30T16:33:14.428Z","outcome":"done","attrs":{"gate":"new or changed scope"}}
+{"op":"close","id":"plan#1","kind":"phase","parent":null,"start":"2026-10-30T16:20:59.657Z","end":"2026-10-30T16:35:14.414Z","outcome":"done","attrs":{}}

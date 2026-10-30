@@ -1,7 +1,7 @@
 {
   "sprint_id": "007-rename-competency-to-kalibr",
   "branch": "sprint/007-rename-competency-to-kalibr",
-  "phase": "audit",
+  "phase": "plan",
   "workflow": "lite",
   "documents": {
     "audit": true,
@@ -62,6 +62,20 @@
       "reason": "adaptive: AC-9 contradiction settled by user (AC-17), no subsystem, migration-deletion or document-skip gate pending",
       "evidence": "audit.md",
       "artifact_revision": "audit.md 2026-10-30"
+    },
+    {
+      "gate": "new or changed scope",
+      "decision_actor": "user",
+      "reason": "retire AC-11 -> AC-18, AC-15 -> AC-19",
+      "evidence": "decisions-log.md 2026-10-30 memory; cost 0 iterations/0 fix rounds",
+      "artifact_revision": "sprint.md AC-18..19"
+    },
+    {
+      "gate": "plan",
+      "decision_actor": "orchestrator",
+      "reason": "adaptive: every Task traces to user-approved AC and scope answers; no settings change, stub or new dependency",
+      "evidence": "plan.md; sprint.md AC-1..AC-19",
+      "artifact_revision": "plan.md 2026-10-30"
     }
   ],
   "task_routing": {},
@@ -85,7 +99,7 @@
     }
   },
   "created_at": "2026-10-30T15:31:30.399Z",
-  "updated_at": "2026-10-30T16:20:53.850Z",
+  "updated_at": "2026-10-30T16:35:14.281Z",
   "review_fixes_pending": null,
   "test_defects_pending": null,
   "pr": null,
