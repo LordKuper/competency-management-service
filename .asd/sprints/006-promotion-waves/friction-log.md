@@ -25,6 +25,7 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 | F-5 | impl-review | Внешнее ревью снова недоступно: исчерпан лимит Codex, итерация засчитана пропуском | reviews/impl/wave-1/iter-02/external, F-2 |
 | F-6 | impl-review | Третья итерация подряд без внешнего ревью: отрицательный кэш quota | reviews/impl/wave-1/iter-03/external, F-2, F-5 |
 | F-7 | impl-review | Четвёртая итерация без внешнего ревью: тот же лимит Codex | reviews/impl/wave-1/iter-04/external, F-6 |
+| F-8 | design-promote | Журнал решений не ротирован при выходе из цикла impl → design-promote | decisions-log.004.md |
 
 ## F-1 — Тестировщик ослабил тест бюджета SQL-команд стола, вместо того чтобы записать дефект кода
 
@@ -81,3 +82,11 @@ Consumed by the retro phase (.asd/workflows/asd-phase-retro.md).
 - **What happened**: в wave-1/iter-04 preflight снова вернул `negative-cache` по той же причине, что в F-6: исчерпан лимит Codex. Итерация засчитана пропуском по доступности.
 - **Impact**: 421 файл остаётся в `Unreviewed files`. Изменение итерации — одна строка doc-комментария, но перенос всего спринта во внешнее ревью продолжается.
 - **Refs**: reviews/impl/wave-1/iter-04/external, F-5, F-6
+
+## F-8 — Журнал решений не ротирован при выходе из цикла impl
+
+- **Phase**: design-promote
+- **Surface**: rule — `.asd/rules/artifact-layout.md` «Decisions log» (ротация при выходе из цикла impl-review → преемник); исполнитель — оркестратор `asd-sprint`
+- **What happened**: перед делегированием design-promote оркестратор не переименовал живой `decisions-log.md`. Пропуск замечен только перед делегированием cleanup; ротация выполнена тогда, поэтому `decisions-log.004.md` содержит и цикл impl, и design-promote.
+- **Impact**: границы сегментов не совпадают с фазами: читателю одного сегмента записи design-promote видны вместе с записями цикла impl. Записи не потеряны.
+- **Refs**: decisions-log.004.md
