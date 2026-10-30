@@ -5,7 +5,7 @@ metadata:
   type: feedback
 ---
 
-A `BackgroundService` registered with `AddHostedService` is constructed whenever the host is built, including by the OpenAPI document generation that runs inside `dotnet build` of `Competency.Api`; there `App:PublicBaseUrl` and similar validated options are unset, so any dependency that reads `IOptions<T>.Value` in its constructor (for example `PromotionCalendar`) throws `OptionsValidationException` and fails the build.
+A `BackgroundService` registered with `AddHostedService` is constructed whenever the host is built, including by the OpenAPI document generation that runs inside `dotnet build` of `Kalibr.Api`; there `App:PublicBaseUrl` and similar validated options are unset, so any dependency that reads `IOptions<T>.Value` in its constructor (for example `PromotionCalendar`) throws `OptionsValidationException` and fails the build.
 
 **Why:** the failure surfaces as 40 cryptic `Microsoft.Extensions.ApiDescription.Server` errors, not as a compile error.
 
